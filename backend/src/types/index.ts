@@ -27,9 +27,10 @@ export interface Complaint {
     status: ComplaintStatus;
     petition?: string;   // generated petition text
     audioUrl?: string;   // optional original audio URL
-    clusterCount?: number; // similar complaints count found via Magic Link
-    createdAt?: FirebaseFirestore.Timestamp | string;
-    updatedAt?: FirebaseFirestore.Timestamp | string;
+    clusterId?: string;  // cluster key: category|village|district|state
+    clusterCount?: number; // number of complaints in same cluster (same category + location)
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 // ─── Wiki ────────────────────────────────────────────────────────────────────
@@ -56,8 +57,8 @@ export interface WikiEntry {
     elderName?: string;
     village?: string;
     audioUrl?: string;
-    createdAt?: FirebaseFirestore.Timestamp | string;
-    updatedAt?: FirebaseFirestore.Timestamp | string;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 // ─── Sarvam AI ───────────────────────────────────────────────────────────────
@@ -98,6 +99,8 @@ export interface MagicLinkMatch {
     wikiId: string;
     score: number;
     title: string;
+    elderName?: string;
+    village?: string;
 }
 
 export interface MagicLinkResult {

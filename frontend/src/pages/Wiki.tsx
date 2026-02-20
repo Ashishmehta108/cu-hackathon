@@ -81,7 +81,7 @@ export function Wiki() {
             type="button"
             onClick={() => setCategoryFilter(cat)}
             className={cn(
-              "rounded-full px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all duration-200 border",
+              "rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-200 border",
               categoryFilter === cat
                 ? "bg-primary text-primary-foreground border-primary shadow-sm"
                 : "bg-background text-muted-foreground border-border hover:border-muted-foreground/30 hover:bg-muted/30"

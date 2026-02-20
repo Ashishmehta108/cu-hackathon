@@ -64,32 +64,24 @@ function toSarvamSTTLanguageCode(code: string | undefined | null): string {
     return mapped === 'auto' ? 'unknown' : mapped;
 }
 
-// ─── LLM Prompt Templates ─────────────────────────────────────────────────────
+// Sarvam-M has ~7k token limit. Keep prompts concise. ~1 token ≈ 4 chars.
+const MAX_CONTEXT_CHARS = 20000; // ~5k tokens buffer for safety
 
-const CATEGORIZE_SYSTEM_PROMPT = `You are Awaaz, a civic complaint classifier for Indian communities.
-Given a citizen's complaint, extract:
-1. category: one of [Infrastructure, Health, Agriculture, Water, Education, Corruption, Other]
-2. keywords: array of 3-5 relevant keywords in English
-3. department: the relevant Indian government department
+/** Truncate text to stay under token limit. Exported for agentService. */
+export function truncateForTokens(text: string, maxChars = MAX_CONTEXT_CHARS): string {
+    if (text.length <= maxChars) return text;
+    return text.slice(0, maxChars) + '\n\n[...truncated for token limit]';
+}
 
-Respond ONLY with valid JSON: {"category": "...", "keywords": [...], "department": "..."}`;
+// ─── LLM Prompt Templates (concise for 7k token limit) ─────────────────────────
 
-const PETITION_SYSTEM_PROMPT = `You are Awaaz, drafting a formal petition letter on behalf of a citizen to an Indian government department. Write a professional, respectful petition in English that:
-1. Addresses the correct department head
-2. States the complaint clearly
-3. Mentions the location
-4. Requests specific action
-5. Is 150-200 words
-6. Ends with "Yours faithfully, The Citizens of [village/district]"`;
+const CATEGORIZE_SYSTEM_PROMPT = `Classify Indian civic complaints. Output ONLY valid JSON:
+{"category":"Infrastructure|Health|Agriculture|Water|Education|Corruption|Other","keywords":["word1","word2","word3"],"department":"Indian govt department name"}`;
 
-const WIKI_PROCESS_PROMPT = `You are Awaaz, processing traditional knowledge shared by a village elder.
-Given the transcription, generate:
-1. title: A clear, descriptive title (5-10 words)
-2. category: one of [Farming, Water Management, Natural Remedies, History, Festivals, Crafts, Other]
-3. tags: array of 5-8 searchable keywords in English
-4. description: A 2-3 sentence summary in English
+const PETITION_SYSTEM_PROMPT = `Draft a formal petition to an Indian govt department. English, 150-200 words. Include: department head address, complaint, location, action requested. End: "Yours faithfully, The Citizens of [village/district]". Output the petition text only.`;
 
-Respond ONLY with valid JSON: {"title": "...", "category": "...", "tags": [...], "description": "..."}`;
+const WIKI_PROCESS_PROMPT = `Process elder wisdom. Output ONLY valid JSON:
+{"title":"5-10 word title","category":"Farming|Water Management|Natural Remedies|History|Festivals|Crafts|Other","tags":["tag1","tag2"],"description":"2-3 sentence summary"}`;
 
 // ─── Service ──────────────────────────────────────────────────────────────────
 
@@ -213,9 +205,12 @@ export async function textToSpeech(text: string, language: string): Promise<stri
  * Categorizes a complaint text via LLM and returns structured result.
  */
 export async function categorizeComplaint(text: string): Promise<CategorizeResult> {
-    const raw = await chatCompletion(CATEGORIZE_SYSTEM_PROMPT, text);
+    const input = truncateForTokens(text, 2000);
+    const raw = await chatCompletion(CATEGORIZE_SYSTEM_PROMPT, input);
     try {
-        return JSON.parse(raw) as CategorizeResult;
+        const jsonMatch = raw.match(/\{[\s\S]*?\}/);
+        const cleaned = jsonMatch ? jsonMatch[0] : raw.replace(/```json|```/g, '').trim();
+        return JSON.parse(cleaned) as CategorizeResult;
     } catch {
         throw new Error(`Failed to parse categorization response: ${raw}`);
     }
@@ -231,11 +226,12 @@ export async function draftPetition(params: {
     location: { village: string; district: string; state: string };
     clusterCount: number;
 }): Promise<string> {
-    const userMessage = `Complaint: ${params.complaint}
+    const complaint = truncateForTokens(params.complaint, 800);
+    const userMessage = `Complaint: ${complaint}
 Category: ${params.category}
 Department: ${params.department}
 Location: ${params.location.village}, ${params.location.district}, ${params.location.state}
-Number of similar complaints: ${params.clusterCount}`;
+Similar complaints: ${params.clusterCount}`;
 
     return chatCompletion(PETITION_SYSTEM_PROMPT, userMessage);
 }
@@ -252,10 +248,13 @@ export async function processWikiEntry(
         translate(transcription, language, 'hi'),
     ]);
 
-    const raw = await chatCompletion(WIKI_PROCESS_PROMPT, english);
+    const englishInput = truncateForTokens(english, 3000);
+    const raw = await chatCompletion(WIKI_PROCESS_PROMPT, englishInput);
     let metadata: { title: string; category: WikiCategory; tags: string[]; description: string };
     try {
-        metadata = JSON.parse(raw);
+        const jsonMatch = raw.match(/\{[\s\S]*?\}/);
+        const cleaned = jsonMatch ? jsonMatch[0] : raw.replace(/```json|```/g, '').trim();
+        metadata = JSON.parse(cleaned);
     } catch {
         throw new Error(`Failed to parse wiki metadata response: ${raw}`);
     }

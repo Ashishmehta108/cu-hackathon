@@ -8,14 +8,10 @@ export const config = {
   apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
   backendUrl: import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001',
 
-  // Firebase Configuration
-  firebase: {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-    appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+  // Supabase (anon key — safe to expose in browser)
+  supabase: {
+    url: "https://vcwaeqdbzlbqneekcctk.supabase.co",
+    anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjd2FlcWRiemxicW5lZWtjY3RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1OTczNDgsImV4cCI6MjA4NzE3MzM0OH0.7S6o1rR3sOmSjS4bFcpSFK_uJmjdBsgQGhFz8XnTgQk",
   },
 
   // Google Maps
@@ -36,8 +32,8 @@ export const config = {
 // Validate required environment variables in production
 if (config.isProduction) {
   const requiredVars = [
-    'VITE_FIREBASE_API_KEY',
-    'VITE_FIREBASE_PROJECT_ID',
+    'VITE_SUPABASE_URL',
+    'VITE_SUPABASE_ANON_KEY',
     'VITE_BACKEND_URL',
   ];
 

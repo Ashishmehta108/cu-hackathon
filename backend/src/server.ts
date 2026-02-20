@@ -1,17 +1,16 @@
+import './bootstrap-env';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import multer from 'multer';
 
 import { sarvamRoutes } from './routes/sarvam';
 import { complaintRoutes } from './routes/complaints';
 import { wikiRoutes } from './routes/wiki';
+import { emailRoutes } from './routes/email';
+import { testRoutes } from './routes/test';
 import { initPinecone } from './services/vectorService';
 import { requestLogger } from './middlewares/requestLogger';
 import { errorMiddleware } from './middlewares/errorMiddleware';
-
-// Load env vars before anything else
-dotenv.config();
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -30,6 +29,8 @@ app.get('/health', (_req, res) => {
 app.use('/api/sarvam', sarvamRoutes(upload));
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/wiki', wikiRoutes);
+app.use('/api/email', emailRoutes);
+app.use('/api/test', testRoutes);
 
 // ─── Global Error Handler (must be LAST) ─────────────────────────────────────
 app.use(errorMiddleware);

@@ -1,0 +1,193 @@
+{
+  "info": {
+    "name": "Awaaz Supabase & Complaints API",
+    "description": "Postman collection for testing Supabase database and Awaaz complaints API. Set supabaseUrl and supabaseKey in collection variables (use anon key or service role key).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3001" },
+    { "key": "supabaseUrl", "value": "https://YOUR_PROJECT.supabase.co" },
+    { "key": "supabaseKey", "value": "YOUR_ANON_OR_SERVICE_KEY" },
+    { "key": "complaintId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "Backend API (uses Supabase)",
+      "item": [
+        {
+          "name": "List Complaints",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/complaints",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "complaints"],
+              "query": [
+                { "key": "status", "value": "pending", "disabled": true },
+                { "key": "category", "value": "Water", "disabled": true },
+                { "key": "village", "value": "Sample Village", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Complaint",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.id) pm.collectionVariables.set('complaintId', json.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"सड़क टूटी हुई है, मंदिर के पास। महीनों से मरम्मत नहीं हुई।\",\n  \"language\": \"hi\",\n  \"category\": \"Infrastructure\",\n  \"keywords\": [\"road\", \"repair\", \"temple\"],\n  \"department\": \"Public Works Department (PWD)\",\n  \"location\": {\n    \"village\": \"Sample Village\",\n    \"district\": \"Sample District\",\n    \"state\": \"Uttar Pradesh\"\n  },\n  \"petition\": \"We request immediate repair of the road near the temple.\"\n}"
+            },
+            "url": "{{baseUrl}}/api/complaints"
+          }
+        },
+        {
+          "name": "Get Complaint by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/complaints/{{complaintId}}"
+          }
+        },
+        {
+          "name": "Update Complaint",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"petition\": \"Updated petition text.\"\n}"
+            },
+            "url": "{{baseUrl}}/api/complaints/{{complaintId}}"
+          }
+        },
+        {
+          "name": "Update Status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\"\n}"
+            },
+            "url": "{{baseUrl}}/api/complaints/{{complaintId}}/status"
+          }
+        },
+        {
+          "name": "Delete Complaint",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/complaints/{{complaintId}}"
+          }
+        },
+        {
+          "name": "Analytics (by Category)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/complaints/analytics"
+          }
+        },
+        {
+          "name": "Create Complaint (Water)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"पानी की सप्लाई तीन दिन से बंद है।\",\n  \"language\": \"hi\",\n  \"category\": \"Water\",\n  \"keywords\": [\"water\", \"supply\"],\n  \"department\": \"Municipal Corporation\",\n  \"location\": {\n    \"village\": \"Bhimapur\",\n    \"district\": \"Prayagraj\",\n    \"state\": \"Uttar Pradesh\"\n  },\n  \"petition\": \"We request urgent restoration of water supply.\"\n}"
+            },
+            "url": "{{baseUrl}}/api/complaints"
+          }
+        },
+        {
+          "name": "Cluster Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/complaints/cluster-count?category=Infrastructure&village=Sample Village&district=Sample District&state=Uttar Pradesh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "complaints", "cluster-count"],
+              "query": [
+                { "key": "category", "value": "Infrastructure" },
+                { "key": "village", "value": "Sample Village" },
+                { "key": "district", "value": "Sample District" },
+                { "key": "state", "value": "Uttar Pradesh" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Direct Supabase REST API",
+      "item": [
+        {
+          "name": "Supabase: List complaints",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "apikey", "value": "{{supabaseKey}}" },
+              { "key": "Authorization", "value": "Bearer {{supabaseKey}}" }
+            ],
+            "url": "{{supabaseUrl}}/rest/v1/complaints?select=*&order=created_at.desc"
+          }
+        },
+        {
+          "name": "Supabase: Insert complaint",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "apikey", "value": "{{supabaseKey}}" },
+              { "key": "Authorization", "value": "Bearer {{supabaseKey}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Prefer", "value": "return=representation" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Water supply is cut off for 3 days. No one from municipality came.\",\n  \"language\": \"hi\",\n  \"category\": \"Water\",\n  \"keywords\": [\"water\", \"supply\", \"municipality\"],\n  \"department\": \"Municipal Corporation\",\n  \"location\": {\"village\": \"Test Village\", \"district\": \"Test District\", \"state\": \"Maharashtra\"},\n  \"status\": \"pending\",\n  \"cluster_id\": \"Water|test village|test district|maharashtra\",\n  \"cluster_count\": 1\n}"
+            },
+            "url": "{{supabaseUrl}}/rest/v1/complaints"
+          }
+        },
+        {
+          "name": "Supabase: Filter by status",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "apikey", "value": "{{supabaseKey}}" },
+              { "key": "Authorization", "value": "Bearer {{supabaseKey}}" }
+            ],
+            "url": "{{supabaseUrl}}/rest/v1/complaints?select=*&status=eq.pending"
+          }
+        }
+      ]
+    }
+  ]
+}

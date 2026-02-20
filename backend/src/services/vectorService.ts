@@ -145,11 +145,13 @@ export async function searchSimilar(
     });
 
     return (result.matches ?? [])
-        .filter((m) => (m.score ?? 0) > 0.7)
+        .filter((m) => (m.score ?? 0) > 0.4)
         .map((m) => ({
             wikiId: m.id,
             score: m.score ?? 0,
             title: (m.metadata?.title as string) ?? '',
+            elderName: (m.metadata?.elderName as string) ?? '',
+            village: (m.metadata?.village as string) ?? '',
         }));
 }
 

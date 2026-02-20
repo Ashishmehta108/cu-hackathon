@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft2,
   Location as LocationIcon,
@@ -12,6 +12,7 @@ import { ComplaintCluster } from "@/components/complaint-cluster";
 import { PetitionDraft } from "@/components/petition-draft";
 import { MagicLinkPanel } from "@/components/magic-link-panel";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { MapView } from "@/components/map-view";
 import { fetchComplaintById, upvoteComplaint } from "@/lib/api";
 import type { Complaint } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -180,6 +181,14 @@ export function ComplaintDetail() {
           </div>
         </div>
 
+        {/* Map View */}
+        <div className="rounded-xl border border-border bg-card p-6">
+          <h2 className="text-sm font-semibold text-foreground mb-3">
+            Location
+          </h2>
+          <MapView complaints={[complaint]} className="h-[300px]" />
+        </div>
+
         {/* Cluster */}
         {complaint.clusterCount > 0 && (
           <ComplaintCluster count={complaint.clusterCount} category={complaint.category} />
@@ -192,7 +201,7 @@ export function ComplaintDetail() {
 
         {/* Petition */}
         {complaint.petitionText && (
-          <PetitionDraft petitionText={complaint.petitionText} />
+          <PetitionDraft petitionText={complaint.petitionText} userLocation={complaint.location} />
         )}
       </div>
     </div>

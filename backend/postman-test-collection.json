@@ -1,0 +1,101 @@
+{
+  "info": {
+    "name": "Awaaz Firebase Test API",
+    "description": "Postman collection for testing Firebase/Firestore endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3001" }
+  ],
+  "item": [
+    {
+      "name": "1. Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "2. Test Firebase Connection",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/test/firebase"
+      }
+    },
+    {
+      "name": "3. Create Test Complaint (minimal)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": "{{baseUrl}}/api/test/complaint"
+      }
+    },
+    {
+      "name": "4. Create Test Complaint (custom)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Road is broken near the temple. No repair for months.\",\n  \"language\": \"hi\",\n  \"category\": \"Infrastructure\",\n  \"keywords\": [\"road\", \"repair\", \"temple\"],\n  \"department\": \"Public Works Department\",\n  \"location\": {\n    \"village\": \"Sample Village\",\n    \"district\": \"Sample District\",\n    \"state\": \"Uttar Pradesh\"\n  },\n  \"petition\": \"We request immediate repair of the road.\"\n}"
+        },
+        "url": "{{baseUrl}}/api/test/complaint"
+      }
+    },
+    {
+      "name": "5. List All Complaints",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/test/complaints"
+      }
+    },
+    {
+      "name": "6. Get Complaint by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/test/complaints/:id",
+        "pathVariable": [
+          { "key": "id", "value": "PASTE_COMPLAINT_ID_HERE" }
+        ]
+      }
+    },
+    {
+      "name": "7. Get Cluster Count",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/test/cluster-count?category=Water&village=Test Village&district=Test District&state=Test State",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "test", "cluster-count"],
+          "query": [
+            { "key": "category", "value": "Water" },
+            { "key": "village", "value": "Test Village" },
+            { "key": "district", "value": "Test District" },
+            { "key": "state", "value": "Test State" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "8. List Wiki Entries",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/test/wiki"
+      }
+    }
+  ]
+}

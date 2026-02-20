@@ -1,0 +1,56 @@
+[
+  {
+    "text": "सड़क टूटी हुई है, मंदिर के पास। महीनों से मरम्मत नहीं हुई।",
+    "language": "hi",
+    "category": "Infrastructure",
+    "keywords": ["road", "repair", "temple", "damage"],
+    "department": "Public Works Department (PWD)",
+    "location": { "village": "Bhimapur", "district": "Prayagraj", "state": "Uttar Pradesh" },
+    "petition": "We the residents of Bhimapur request immediate repair of the road near the temple."
+  },
+  {
+    "text": "पानी की सप्लाई तीन दिन से बंद है। नगर निगम का कोई नहीं आया।",
+    "language": "hi",
+    "category": "Water",
+    "keywords": ["water", "supply", "municipality", "shortage"],
+    "department": "Municipal Corporation",
+    "location": { "village": "Bhimapur", "district": "Prayagraj", "state": "Uttar Pradesh" },
+    "petition": "We request urgent restoration of water supply in Bhimapur."
+  },
+  {
+    "text": "सरकारी अस्पताल में डॉक्टर नहीं हैं। दवाई भी नहीं मिल रही।",
+    "language": "hi",
+    "category": "Health",
+    "keywords": ["hospital", "doctor", "medicine", "shortage"],
+    "department": "Department of Health",
+    "location": { "village": "Kharagpur", "district": "Midnapore", "state": "West Bengal" },
+    "petition": "We request adequate doctors and medicines at the primary health centre."
+  },
+  {
+    "text": "खेत में सिंचाई के लिए पानी नहीं मिल रहा। नहर सूखी पड़ी है।",
+    "language": "hi",
+    "category": "Agriculture",
+    "keywords": ["irrigation", "canal", "farming", "water"],
+    "department": "Department of Agriculture",
+    "location": { "village": "Agra", "district": "Agra", "state": "Uttar Pradesh" },
+    "petition": "We request restoration of canal water for irrigation."
+  },
+  {
+    "text": "स्कूल की छत टपक रही है। बारिश में बच्चे नहीं पढ़ सकते।",
+    "language": "hi",
+    "category": "Education",
+    "keywords": ["school", "roof", "leak", "repair"],
+    "department": "Department of Education",
+    "location": { "village": "Bhimapur", "district": "Prayagraj", "state": "Uttar Pradesh" },
+    "petition": "We request immediate repair of the school roof."
+  },
+  {
+    "text": "राशन दुकान पर रिश्वत मांगी जा रही है।",
+    "language": "hi",
+    "category": "Corruption",
+    "keywords": ["ration", "shop", "bribe", "PDS"],
+    "department": "Department of Food and Civil Supplies",
+    "location": { "village": "Kharagpur", "district": "Midnapore", "state": "West Bengal" },
+    "petition": "We request action against corruption at the ration shop."
+  }
+]

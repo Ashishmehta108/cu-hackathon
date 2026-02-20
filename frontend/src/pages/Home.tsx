@@ -259,48 +259,6 @@ export function Home() {
         {/* ═══════════════════════════════════════════════════════════════
             NAV
         ═══════════════════════════════════════════════════════════════ */}
-        <header className="fixed top-0 inset-x-0 z-50">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 md:px-10">
-            <Link to="/" className="flex items-center gap-2.5 group" id="nav-logo">
-              <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-[#1C1714] text-[#FAF7F2] overflow-hidden transition-all duration-300 group-hover:scale-105">
-                <Speaker size={15} variant="Bold" color="currentColor" />
-                <div className="absolute inset-0 bg-[#C4874F] opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
-              </div>
-              <span
-                className="text-[1.05rem] font-medium tracking-tight text-[#1C1714]"
-                style={{ fontFamily: "var(--serif)" }}
-              >
-                Awaaz
-              </span>
-            </Link>
-
-            <nav className="hidden md:flex items-center gap-8" style={{ fontFamily: "var(--sans)" }}>
-              {[
-                { label: "About", href: "#about" },
-                { label: "Issues", href: "/dashboard" },
-                { label: "Wiki", href: "/wiki" },
-              ].map((l) => (
-                <Link
-                  key={l.label}
-                  to={l.href}
-                  className="text-[0.8rem] font-medium text-[#5C5040] hover:text-[#1C1714] transition-colors relative after:absolute after:bottom-[-2px] after:left-0 after:h-px after:w-0 after:bg-[#C4874F] after:transition-all hover:after:w-full"
-                >
-                  {l.label}
-                </Link>
-              ))}
-            </nav>
-
-            <Link
-              to="/record-complaint"
-              id="nav-cta"
-              className="flex h-9 items-center gap-2 rounded-full bg-[#1C1714] px-5 text-[0.75rem] font-semibold text-[#FAF7F2] tracking-wide transition-all duration-300 hover:bg-[#C4874F] hover:shadow-lg hover:shadow-[#C4874F]/20 hover:-translate-y-px"
-              style={{ fontFamily: "var(--sans)" }}
-            >
-              <Microphone2 size={13} variant="Bold" color="currentColor" />
-              Report Issue
-            </Link>
-          </div>
-        </header>
 
         {/* ═══════════════════════════════════════════════════════════════
             HERO — Full viewport, editorial layout
@@ -308,7 +266,7 @@ export function Home() {
         <section
           ref={heroRef}
           id="hero"
-          className="relative flex min-h-screen flex-col justify-end overflow-hidden pb-20 pt-28 px-6 md:px-10"
+          className="relative flex pt-10 flex-col justify-end overflow-hidden pb-20  px-6 md:px-10"
           aria-label="Hero section"
         >
           {/* Background layers */}
@@ -316,16 +274,7 @@ export function Home() {
           <Noise opacity={0.02} />
 
           {/* Cursor-reactive amber orb */}
-          <motion.div
-            className="pointer-events-none absolute top-[10%] right-[5%] h-[520px] w-[520px] rounded-full opacity-70"
-            style={{
-              background:
-                "radial-gradient(circle at 38% 38%, #E8C49A 0%, #D4956A30 42%, transparent 68%)",
-              x: mousePos.x,
-              y: mousePos.y,
-              transition: "transform 1s cubic-bezier(0.22,1,0.36,1)",
-            }}
-          />
+
 
           {/* Sage secondary orb */}
           <div className="pointer-events-none absolute top-[45%] left-[3%] h-72 w-72 rounded-full bg-[#8B9D5E]/8 blur-[80px]" />
@@ -372,7 +321,7 @@ export function Home() {
             <div className="grid grid-cols-12 gap-4 items-end">
               <motion.h1
                 variants={fadeUp}
-                className="col-span-12 md:col-span-9 text-[clamp(3.2rem,8vw,7rem)] leading-[0.95] tracking-[-0.03em] font-normal"
+                className="col-span-12 md:col-span-9 text-8xl leading-[0.95] tracking-[-0.03em] font-normal"
                 style={{ fontFamily: "var(--serif)" }}
               >
                 Giving rural India

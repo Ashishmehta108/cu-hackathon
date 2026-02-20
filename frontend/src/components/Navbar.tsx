@@ -7,6 +7,7 @@ import {
     Category,
     Book1,
     Radio,
+    Microphone2,
 } from "iconsax-react";
 import { useState } from "react"
 import { cn } from "@/lib/utils"
@@ -24,49 +25,65 @@ export function Navbar() {
     ]
 
     return (
-        <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex h-16 items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/[0.03] border border-primary/10 text-primary shadow-sm">
-                                <Microphone className="h-4 w-4" variant="Bold" />
-                            </div>
-                            <span className="text-lg font-black tracking-tighter text-foreground">Awaaz</span>
-                        </Link>
-                    </div>
 
-                    {/* Desktop links */}
-                    <div className="hidden md:flex md:items-center md:gap-6">
+                    {/* Logo */}
+                    <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/5 text-primary">
+                            <Microphone2 className="h-6 w-6" color="black" variant="Linear" />
+                        </div>
+                        <span className="text-base font-semibold tracking-tight">
+                            Awaaz
+                        </span>
+                    </Link>
+
+                    {/* Desktop Links */}
+                    <div className="hidden md:flex items-center gap-6">
                         {links.map((link) => {
-                            const isActive = location.pathname === link.href || (link.href !== '/' && location.pathname.startsWith(link.href))
+                            const isActive =
+                                location.pathname === link.href ||
+                                (link.href !== '/' &&
+                                    location.pathname.startsWith(link.href))
+
                             return (
                                 <Link
                                     key={link.href}
                                     to={link.href}
                                     className={cn(
-                                        "flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider transition-all hover:text-primary",
-                                        isActive ? "text-primary bg-primary/[0.03] px-3 py-1.5 rounded-full" : "text-muted-foreground px-3 py-1.5"
+                                        "relative flex items-center gap-2 text-sm font-medium transition-colors duration-200",
+                                        isActive
+                                            ? "text-foreground"
+                                            : "text-muted-foreground hover:text-foreground"
                                     )}
                                 >
-                                    <link.icon className="h-3.5 w-3.5" variant="Linear" />
+                                    <link.icon
+                                        className="h-4 w-4"
+                                        variant="Linear"
+                                        color="black"
+                                    />
                                     {link.label}
+
+                                    {/* Subtle underline indicator */}
+                                    {isActive && (
+                                        <span className="absolute -bottom-2 left-0 h-[2px] w-full bg-primary/70 rounded-full" />
+                                    )}
                                 </Link>
                             )
                         })}
                     </div>
 
-                    {/* Mobile menu button */}
-                    <div className="md:hidden flex items-center">
+                    {/* Mobile Toggle */}
+                    <div className="md:hidden">
                         <button
                             onClick={() => setIsOpen(!isOpen)}
-                            className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
+                            className="p-2 text-muted-foreground hover:text-foreground transition"
                         >
-                            <span className="sr-only">Open main menu</span>
                             {isOpen ? (
-                                <CloseCircle className="block h-6 w-6" aria-hidden="true" variant="Linear" color="currentColor" />
+                                <CloseCircle className="h-6 w-6" variant="Linear" />
                             ) : (
-                                <HambergerMenu className="block h-6 w-6" aria-hidden="true" variant="Linear" color="currentColor" />
+                                <HambergerMenu className="h-6 w-6" variant="Linear" color="black" />
                             )}
                         </button>
                     </div>
@@ -75,23 +92,30 @@ export function Navbar() {
 
             {/* Mobile Menu */}
             {isOpen && (
-                <div className="md:hidden border-t border-border/40 bg-background">
-                    <div className="space-y-1 px-4 pb-4 pt-2">
+                <div className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur-md">
+                    <div className="px-4 py-3 space-y-2">
                         {links.map((link) => {
-                            const isActive = location.pathname === link.href || (link.href !== '/' && location.pathname.startsWith(link.href))
+                            const isActive =
+                                location.pathname === link.href ||
+                                (link.href !== '/' &&
+                                    location.pathname.startsWith(link.href))
+
                             return (
                                 <Link
                                     key={link.href}
                                     to={link.href}
                                     onClick={() => setIsOpen(false)}
                                     className={cn(
-                                        "flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium",
+                                        "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition",
                                         isActive
-                                            ? "bg-primary/10 text-primary"
-                                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                            ? "bg-primary/5 text-foreground"
+                                            : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
                                     )}
                                 >
-                                    <link.icon className="h-5 w-5" variant="Linear" color="currentColor" />
+                                    <link.icon
+                                        className="h-5 w-5"
+                                        variant="Linear"
+                                    />
                                     {link.label}
                                 </Link>
                             )

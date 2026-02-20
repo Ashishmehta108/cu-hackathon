@@ -11,6 +11,9 @@ complaintRoutes.get('/', asyncHandler(complaintController.list));
 // GET  /api/complaints/analytics — category counts
 complaintRoutes.get('/analytics', asyncHandler(complaintController.analytics));
 
+// GET  /api/complaints/cluster-count — count in same cluster (category + location)
+complaintRoutes.get('/cluster-count', asyncHandler(complaintController.clusterCount));
+
 // GET  /api/complaints/:id — get single
 complaintRoutes.get('/:id', asyncHandler(complaintController.getById));
 

@@ -1,9 +1,7 @@
-import { MOCK_COMPLAINTS, MOCK_WIKI_ENTRIES, MOCK_STATS } from "./mock-data";
 import { config } from "./config";
 import type {
   Complaint,
   ComplaintCategory,
-  ComplaintStatus,
   Location,
   MagicLink,
   WikiEntry,
@@ -29,9 +27,6 @@ function normalizeLanguageCode(code: string | undefined | null): string {
 
 // API base URL from config
 const API_BASE_URL = config.apiBaseUrl;
-
-// Whether to prefer mocks (e.g. when backend is not running)
-const SHOULD_USE_MOCKS_BY_DEFAULT = !API_BASE_URL;
 
 // Helper function to make API calls
 async function apiCall<T>(
@@ -186,8 +181,8 @@ function mapBackendComplaintToFrontend(c: BackendComplaint): Complaint {
     translatedText: c.text,
     language: c.language,
     category: toFrontendComplaintCategory(c.category),
-    department: c.department,
-    location: c.location,
+    department: c.department || "",
+    location: c.location || { village: "", district: "", state: "" },
     status: c.status as any,
     upvotes: c.clusterCount ?? 0,
     keywords: c.keywords ?? [],
@@ -266,29 +261,34 @@ export async function fetchComplaints(filters?: {
   status?: string;
   search?: string;
 }): Promise<Complaint[]> {
-  const queryParams = new URLSearchParams();
-  if (filters?.category) queryParams.append('category', toBackendComplaintCategory(filters.category));
-  if (filters?.status) queryParams.append('status', filters.status);
+  try {
+    const queryParams = new URLSearchParams();
+    if (filters?.category) queryParams.append('category', toBackendComplaintCategory(filters.category));
+    if (filters?.status) queryParams.append('status', filters.status);
 
-  const endpoint = `/complaints${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-  const backendResult = await apiCall<BackendComplaint[]>(endpoint, {
-    method: "GET",
-  });
+    const endpoint = `/complaints${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const backendResult = await apiCall<BackendComplaint[]>(endpoint, {
+      method: "GET",
+    });
 
-  let mapped = backendResult.map(mapBackendComplaintToFrontend);
+    let mapped = backendResult.map(mapBackendComplaintToFrontend);
 
-  if (filters?.search) {
-    const q = filters.search.toLowerCase();
-    mapped = mapped.filter(
-      (c) =>
-        c.transcription.toLowerCase().includes(q) ||
-        c.location.village.toLowerCase().includes(q) ||
-        c.location.district.toLowerCase().includes(q) ||
-        c.location.state.toLowerCase().includes(q)
-    );
+    if (filters?.search) {
+      const q = filters.search.toLowerCase();
+      mapped = mapped.filter(
+        (c) =>
+          (c.transcription || "").toLowerCase().includes(q) ||
+          (c.location?.village || "").toLowerCase().includes(q) ||
+          (c.location?.district || "").toLowerCase().includes(q) ||
+          (c.location?.state || "").toLowerCase().includes(q)
+      );
+    }
+
+    return mapped;
+  } catch (error) {
+    console.error("fetchComplaints failed:", error);
+    return [];
   }
-
-  return mapped;
 }
 
 export async function fetchComplaintById(
@@ -328,7 +328,6 @@ export async function submitComplaint(data: {
       location: data.location,
       status: "pending",
       petition: data.petitionText,
-      audioUrl: undefined,
       clusterCount: data.clusterCount,
     }),
   });
@@ -348,9 +347,28 @@ export async function upvoteComplaint(id: string): Promise<number> {
     });
     return res.clusterCount ?? 1;
   } catch {
-    await delay(300);
-    const complaint = MOCK_COMPLAINTS.find((c) => c.id === id);
-    return (complaint?.upvotes ?? 0) + 1;
+    return 1;
+  }
+}
+
+/** Get count of complaints in same cluster (same category + location). */
+export async function getClusterCount(
+  category: ComplaintCategory,
+  location: { village: string; district: string; state: string }
+): Promise<number> {
+  try {
+    const params = new URLSearchParams({
+      category: toBackendComplaintCategory(category),
+      village: location.village ?? "",
+      district: location.district ?? "",
+      state: location.state ?? "",
+    });
+    const res = await apiCall<{ clusterCount: number }>(
+      `/complaints/cluster-count?${params}`
+    );
+    return res.clusterCount ?? 0;
+  } catch {
+    return 0;
   }
 }
 
@@ -448,7 +466,8 @@ export async function categorizeComplaint(text: string): Promise<{
 export async function draftPetition(
   text: string,
   category: ComplaintCategory,
-  location: { village: string; district: string; state: string }
+  location: { village: string; district: string; state: string },
+  clusterCount?: number
 ): Promise<{ petition: string; contact?: any }> {
   try {
     const result = await apiCall<{ petition: string; contact?: any }>(
@@ -460,6 +479,7 @@ export async function draftPetition(
           category: toBackendComplaintCategory(category),
           department: CATEGORY_DEPARTMENT_MAP[category],
           location,
+          clusterCount: clusterCount ?? 0,
         }),
       }
     );
@@ -476,7 +496,7 @@ export async function findMagicLinks(
 ): Promise<Complaint["magicLinks"]> {
   try {
     const result = await apiCall<{
-      matches: { wikiId: string; score: number; title: string }[];
+      matches: { wikiId: string; score: number; title: string, elderName?: string, village?: string }[];
     }>("/sarvam/magic-link", {
       method: "POST",
       body: JSON.stringify({ complaintText: text }),
@@ -485,8 +505,8 @@ export async function findMagicLinks(
     return result.matches.map((m) => ({
       wikiEntryId: m.wikiId,
       title: m.title,
-      elderName: "",
-      location,
+      elderName: m.elderName && m.elderName.trim() !== "" ? m.elderName : "Unknown Elder",
+      location: { ...location, village: m.village && m.village.trim() !== "" ? m.village : location.village },
       relevance: `Similar story found in Wiki (${Math.round(m.score * 100)}% match)`,
     }));
   } catch {
@@ -526,13 +546,14 @@ export async function fetchWikiEntries(filters?: {
     if (filters?.search) {
       const q = filters.search.toLowerCase();
       mapped = mapped.filter(w =>
-        w.title.toLowerCase().includes(q) ||
-        w.description.toLowerCase().includes(q) ||
-        w.elderName.toLowerCase().includes(q)
+        (w.title || "").toLowerCase().includes(q) ||
+        (w.description || "").toLowerCase().includes(q) ||
+        (w.elderName || "").toLowerCase().includes(q)
       );
     }
     return mapped;
-  } catch {
+  } catch (error) {
+    console.error("fetchWikiEntries failed:", error);
     return [];
   }
 }
@@ -541,7 +562,8 @@ export async function fetchWikiEntryById(id: string): Promise<WikiEntry | null> 
   try {
     const backendResult = await apiCall<BackendWikiEntry>(`/wiki/${id}`);
     return mapBackendWikiEntryToFrontend(backendResult);
-  } catch {
+  } catch (error) {
+    console.error("fetchWikiEntryById failed:", error);
     return null;
   }
 }
@@ -559,6 +581,7 @@ export async function processWikiEntry(data: {
   suggestedCategory: WikiCategory;
   suggestedTags: string[];
   suggestedDescription: string;
+  language: string;
 }> {
   try {
     let transcription = "";
@@ -590,6 +613,7 @@ export async function processWikiEntry(data: {
       suggestedCategory: toFrontendWikiCategory(result.category),
       suggestedTags: result.tags ?? [],
       suggestedDescription: result.description,
+      language: detectedLanguage,
     };
   } catch {
     return {
@@ -600,27 +624,44 @@ export async function processWikiEntry(data: {
       suggestedCategory: "other",
       suggestedTags: [],
       suggestedDescription: "",
+      language: "auto",
     };
   }
 }
 
-export async function fetchStats(): Promise<typeof MOCK_STATS> {
+export async function fetchStats(): Promise<{ totalComplaints: number; totalPetitions: number; totalWikiEntries: number; categoryCounts: Record<string, number> }> {
   try {
     const result = await apiCall<{ byCategory: Record<string, number> }>("/complaints/analytics");
     const counts = result.byCategory;
     const totalComplaints = Object.values(counts).reduce((s, n) => s + n, 0);
 
     return {
-      ...MOCK_STATS,
       totalComplaints,
-      // Map backend capitalized categories back to frontend keys for the stats
+      totalPetitions: totalComplaints, // approximation: every complaint has a petition
+      totalWikiEntries: 0,
       categoryCounts: Object.entries(counts).reduce((acc, [k, v]) => {
         acc[toFrontendComplaintCategory(k)] = v;
         return acc;
       }, {} as Record<string, number>),
     };
   } catch {
-    return MOCK_STATS;
+    return { totalComplaints: 0, totalPetitions: 0, totalWikiEntries: 0, categoryCounts: {} };
   }
 }
 
+export async function sendEmail(
+  to: string,
+  subject: string,
+  text: string,
+  html?: string
+): Promise<{ success: boolean; data?: any; error?: any }> {
+  try {
+    return await apiCall<{ success: boolean; data?: any; error?: any }>("/email/send", {
+      method: "POST",
+      body: JSON.stringify({ to, subject, text, html }),
+    });
+  } catch (error: any) {
+    console.error("Failed to send email:", error);
+    return { success: false, error: error.message };
+  }
+}

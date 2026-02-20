@@ -1,45 +1,52 @@
 import { searchWeb } from './searchService';
-import { chatCompletion } from './sarvamService';
+import { chatCompletion, truncateForTokens } from './sarvamService';
 
-const CONTACT_FINDER_PROMPT = `You are Awaaz Contact Finder Agent.
-Your goal is to extract official contact details (phone number and email address) for a specific government department in a given location in India based on search results.
-
-Instructions:
-1. Examine the provided search results carefully.
-2. Look for:
-   - Official phone numbers (helplines, toll-free, office landlines, mobile numbers of key officers).
-   - Official email addresses (ending in .gov.in, .nic.in, or official department domains).
-3. If multiple contacts are found, prioritize official office numbers and official government emails.
-4. If you find a "Contact Us" or "Directory" page URL, prioritize that.
-5. Even if exact matches are hard, look for regional offices (District or State level) related to the department.
-6. Respond ONLY with a valid JSON object:
-{
-  "department": "...",
-  "location": "...",
-  "contactNumber": "...", // The extracted number or "Not found"
-  "email": "...",         // The extracted email or "Not found"
-  "sourceUrl": "...",     // The primary URL where you found the details
-  "confidence": 0.0-1.0,  // Your confidence in these details being correct
-  "isRegional": boolean   // True if it's a district/regional office rather than state head office
+function normalizeDepartmentForSearch(dept: string): string {
+    const d = dept.toLowerCase();
+    if (d.includes('jal shakti') || d.includes('water')) return dept + ' Water Resources';
+    if (d.includes('bijli') || d.includes('electricity')) return dept + ' PSPCL discom';
+    if (d.includes('health')) return dept + ' CMHO CMO district';
+    if (d.includes('pwd') || d.includes('works')) return dept + ' Executive Engineer';
+    return dept;
 }
-`;
+
+// Concise prompt; Sarvam has 7k token limit. Indian formats: phone 10 digits, 1800-xxx, +91; email @gov.in, @nic.in
+const CONTACT_FINDER_PROMPT = `Extract official contact from search results for Indian govt dept.
+Phone: 10-digit (9xxxxxxxxx), 1800 toll-free, +91, landline (011-xxx). Email: @gov.in, @nic.in, @*.gov.in
+Output ONLY JSON: {"department":"","location":"","contactNumber":"number or Not found","email":"email or Not found","sourceUrl":"","confidence":0.0-1.0,"isRegional":true|false}`;
+
+/** Truncate each result to avoid exceeding 7k tokens. */
+const MAX_RESULT_CHARS = 1000;
+const MAX_RESULTS = 5;
 
 /**
  * Agent that searches for a department's contact details (Phone & Email).
  */
 export async function findDepartmentContact(department: string, location: string) {
-    // Basic normalization/synonyms for better search
-    let searchTerm = department;
-    if (department.toLowerCase().includes('jal shakti')) {
-        searchTerm += ' Water Resources Department';
-    } else if (department.toLowerCase().includes('bijli') || department.toLowerCase().includes('electricity')) {
-        searchTerm += ' PSPCL Power Corporation';
+    const searchTerm = normalizeDepartmentForSearch(department);
+    const queries = [
+        `contact phone helpline ${searchTerm} ${location} India gov.in`,
+        `email directory ${searchTerm} ${location} India nic.in gov.in`,
+    ];
+
+    const allResults: { title: string; url: string; content: string; score: number }[] = [];
+    const seenUrls = new Set<string>();
+
+    let summarizedAnswer = '';
+    for (const q of queries) {
+        const { results, answer } = await searchWeb(q);
+        if (answer) summarizedAnswer += `\n- ${answer}`;
+        for (const r of results) {
+            if (!seenUrls.has(r.url)) {
+                seenUrls.add(r.url);
+                allResults.push({ ...r, content: r.content.slice(0, MAX_RESULT_CHARS) });
+            }
+            if (allResults.length >= MAX_RESULTS * 2) break;
+        }
     }
 
-    const mainQuery = `official contact number email directory ${searchTerm} in ${location} India .gov.in`;
-    console.log(`Agent searching for: ${mainQuery}`);
-
-    const { results: searchResults, answer } = await searchWeb(mainQuery);
+    const searchResults = allResults.slice(0, MAX_RESULTS);
+    console.log(`Agent: found ${searchResults.length} results for ${department} in ${location}`);
 
     if (searchResults.length === 0) {
         return {
@@ -54,51 +61,83 @@ export async function findDepartmentContact(department: string, location: string
     }
 
     let context = searchResults
-        .map((r, i) => `Result ${i + 1} (${r.url}):\n${r.content}`)
+        .map((r, i) => `[${i + 1}] ${r.url}\n${r.content}`)
         .join('\n\n');
-
-    if (answer) {
-        context = `Summary Answer from Search: ${answer}\n\n` + context;
+    if (summarizedAnswer) {
+        context = `Key Findings:${summarizedAnswer}\n\n${context}`;
     }
+    context = truncateForTokens(context, 10000); // well within 7k tokens
 
-    const userMessage = `Department: ${department}\nLocation: ${location}\n\nSearch Results:\n${context}`;
+    const userMessage = `Dept: ${department}\nLocation: ${location}\n\nResults:\n${context}`;
 
     const rawResponse = await chatCompletion(CONTACT_FINDER_PROMPT, userMessage);
 
     try {
-        // Clean the response if LLM adds markdown blocks
-        const cleaned = rawResponse.replace(/```json|```/g, '').trim();
-        return JSON.parse(cleaned);
+        const jsonMatch = rawResponse.match(/\{[\s\S]*?\}/);
+        const cleaned = jsonMatch ? jsonMatch[0] : rawResponse.replace(/```json|```/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+        const fullText = searchResults.map((r) => r.content).join(' ');
+
+        const noPhone = !parsed.contactNumber || /not\s*found|n\/?a|none|null|unspecified/i.test(String(parsed.contactNumber));
+        if (noPhone) {
+            const extracted = extractPhone(fullText);
+            if (extracted) {
+                parsed.contactNumber = extracted;
+                parsed.confidence = Math.min((parsed.confidence || 0.5) + 0.2, 0.9);
+            }
+        }
+
+        const noEmail = !parsed.email || /not\s*found|n\/?a|none|null|unspecified/i.test(String(parsed.email));
+        if (noEmail) {
+            const extracted = extractEmail(fullText);
+            if (extracted) {
+                parsed.email = extracted;
+                parsed.confidence = Math.min((parsed.confidence || 0.5) + 0.2, 0.9);
+            }
+        }
+        return parsed;
     } catch (error) {
         console.error('Failed to parse Agent response:', rawResponse);
+        const fullText = searchResults.map((r) => r.content).join(' ');
         return {
             department,
             location,
-            contactNumber: 'Error parsing response',
-            email: 'Error parsing response',
-            sourceUrl: '',
-            confidence: 0,
-            raw: rawResponse
+            contactNumber: extractPhone(fullText) || 'Not found',
+            email: extractEmail(fullText) || 'Not found',
+            sourceUrl: searchResults[0]?.url ?? '',
+            confidence: 0.5,
+            note: 'Used regex fallback',
         };
     }
 }
-const EMAIL_DRAFTER_PROMPT = `You are Awaaz Email Drafting Agent.
-Your task is to write a professional, formal email to a government department regarding a citizen's complaint.
 
-The email should:
-1. Have a clear, descriptive subject line.
-2. Be polite and respectful.
-3. State the issue clearly.
-4. Mention the location (village/district/state).
-5. Request a resolution or acknowledgment.
-6. Use a formal closing.
-
-Respond ONLY with a valid JSON object:
-{
-  "subject": "...",
-  "body": "..."
+/** Extract Indian phone: 10-digit mobile, 1800 toll-free, +91, landline (011-xxx). */
+function extractPhone(text: string): string | null {
+    const patterns = [
+        /\b1800[\s-]?\d{4}[\s-]?\d{3}\b/i, // Toll free
+        /\b\+91[\s-]?\d{10}\b/, // Mobile with +91
+        /\b0?[6-9]\d{9}\b/, // 10 digit mobile
+        /\b0\d{2,4}[\s-]?\d{6,8}\b/, // STD Landline
+        /\b\d{3,5}[\s-]\d{5,7}\b/, // General spaced landline
+    ];
+    for (const p of patterns) {
+        const m = text.match(p);
+        if (m) return m[0].replace(/\s+/g, ' ').trim();
+    }
+    return null;
 }
-`;
+
+/** Extract email, preferring gov/nic emails but allowing others */
+function extractEmail(text: string): string | null {
+    // try gov/nic first
+    let m = text.match(/[\\w.+%-]+@(?:[\\w-]+\\.)?(?:gov|nic)\\.in\\b/i);
+    if (m) return m[0];
+
+    // fallback to any valid email
+    m = text.match(/[\\w.+%-]+@[\\w.-]+\\.[a-zA-Z]{2,}\\b/);
+    return m ? m[0] : null;
+}
+const EMAIL_DRAFTER_PROMPT = `Draft formal email to Indian govt dept. JSON only: {"subject":"","body":"..."}. Include: clear subject, polite tone, complaint, location, resolution request, formal closing.`;
 
 /**
  * Agent that drafts a professional email for the complaint.
@@ -109,17 +148,14 @@ export async function draftEmail(params: {
     location: { village: string; district: string; state: string };
     recipientEmail?: string;
 }) {
-    const userMessage = `
-    Complaint: ${params.complaint}
-    Department: ${params.department}
-    Location: ${params.location.village}, ${params.location.district}, ${params.location.state}
-    Recipient Email: ${params.recipientEmail || 'Official Department Email'}
-    `;
+    const complaint = params.complaint.slice(0, 1500);
+    const userMessage = `Complaint: ${complaint}\nDept: ${params.department}\nLocation: ${params.location.village}, ${params.location.district}, ${params.location.state}\nTo: ${params.recipientEmail || 'Dept email'}`;
 
     const rawResponse = await chatCompletion(EMAIL_DRAFTER_PROMPT, userMessage);
 
     try {
-        const cleaned = rawResponse.replace(/```json|```/g, '').trim();
+        const jsonMatch = rawResponse.match(/\{[\s\S]*?\}/);
+        const cleaned = jsonMatch ? jsonMatch[0] : rawResponse.replace(/```json|```/g, '').trim();
         return JSON.parse(cleaned);
     } catch (error) {
         console.error('Failed to parse Email Draft response:', rawResponse);

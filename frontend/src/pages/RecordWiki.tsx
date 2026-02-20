@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Microphone,
@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { VoiceRecorder } from "@/components/voice-recorder";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CategoryBadge } from "@/components/category-badge";
-import { LANGUAGES } from "@/lib/types";
 import type { WikiCategory } from "@/lib/types";
 import { processWikiEntry, createWikiEntry } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -30,11 +29,32 @@ export function RecordWiki() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [elderName, setElderName] = useState("");
-  const [language, setLanguage] = useState("hi");
+  const [language, setLanguage] = useState("auto");
   const [village, setVillage] = useState("");
   const [district, setDistrict] = useState("");
   const [state, setState] = useState("");
   const [hasRecording, setHasRecording] = useState(false);
+  const [recordingBlob, setRecordingBlob] = useState<Blob | null>(null);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          console.log(latitude, longitude)
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          const data = await res.json();
+          if (data && data.address) {
+            setVillage(data.address.village || data.address.town || data.address.city || data.address.suburb || "");
+            setDistrict(data.address.state_district || data.address.county || "");
+            setState(data.address.state || "");
+          }
+        } catch (e) {
+          console.error("Geolocation reverse lookup failed", e);
+        }
+      });
+    }
+  }, []);
 
   // Review data
   const [isProcessing, setIsProcessing] = useState(false);
@@ -50,17 +70,17 @@ export function RecordWiki() {
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [suggestedDescription, setSuggestedDescription] = useState("");
 
-  const handleRecordingComplete = useCallback((_blob: Blob) => {
+  const handleRecordingComplete = useCallback((blob: Blob) => {
     setHasRecording(true);
+    setRecordingBlob(blob);
   }, []);
 
   const handleGoToReview = async () => {
     setStep(1);
     setIsProcessing(true);
     try {
-      const dummyBlob = new Blob(["dummy"], { type: "audio/wav" });
       const result = await processWikiEntry({
-        audioBlob: dummyBlob,
+        audioBlob: recordingBlob || new Blob(["dummy"], { type: "audio/wav" }),
         elderName,
         language,
         location: { village, district, state },
@@ -72,6 +92,7 @@ export function RecordWiki() {
       setSuggestedCategory(result.suggestedCategory);
       setSuggestedTags(result.suggestedTags);
       setSuggestedDescription(result.suggestedDescription);
+      setLanguage(result.language);
     } finally {
       setIsProcessing(false);
     }
@@ -132,7 +153,7 @@ export function RecordWiki() {
           <div key={s.label} className="flex flex-1 items-center gap-1">
             <div
               className={cn(
-                "flex h-7 flex-1 items-center justify-center gap-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all duration-300",
+                "flex h-7 flex-1 items-center justify-center gap-1.5 rounded-lg text-xs font-medium transition-all duration-300",
                 i < step && "bg-green-500/5 text-green-600/80 border border-green-500/10",
                 i === step && "bg-primary text-primary-foreground shadow-sm",
                 i > step && "bg-muted/50 text-muted-foreground/50 border border-transparent"
@@ -151,7 +172,7 @@ export function RecordWiki() {
           <div className="rounded-2xl border border-border/50 bg-card p-6 transition-all">
             {/* Elder name */}
             <div className="mb-6">
-              <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+              <label className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground mb-2">
                 <User className="h-3.5 w-3.5 text-primary/60" variant="Linear" />
                 Elder Name
               </label>
@@ -164,32 +185,48 @@ export function RecordWiki() {
               />
             </div>
 
-            {/* Language selector */}
-            <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
-              Select Language
+            {/* Language detection is automatic */}
+            <label className="block text-[11px] font-semibold text-muted-foreground mb-2">
+              Language
             </label>
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="mb-8 h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all font-medium"
-            >
-              {LANGUAGES.map((lang) => (
-                <option key={lang.code} value={lang.code}>
-                  {lang.label} ({lang.native})
-                </option>
-              ))}
-            </select>
+            <div className="mb-8 h-10 w-full rounded-xl border border-border/60 bg-muted/20 px-3 flex items-center text-sm text-muted-foreground font-medium">
+              Auto-detecting language from voice...
+            </div>
 
             {/* Voice Recorder */}
             <VoiceRecorder onComplete={handleRecordingComplete} className="mb-8" />
 
             {/* Location fields */}
             <div className="border-t border-border/40 pt-6">
-              <div className="flex items-center gap-2 mb-4">
-                <LocationIcon className="h-4 w-4 text-primary/60" variant="Linear" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  Location Details
-                </span>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <LocationIcon className="h-4 w-4 text-primary/60" variant="Linear" />
+                  <span className="text-[11px] font-semibold text-muted-foreground">
+                    Location details
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (navigator.geolocation) {
+                      navigator.geolocation.getCurrentPosition(async (position) => {
+                        try {
+                          const { latitude, longitude } = position.coords;
+                          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                          const data = await res.json();
+                          if (data && data.address) {
+                            setVillage(data.address.village || data.address.town || data.address.city || data.address.suburb || "");
+                            setDistrict(data.address.state_district || data.address.county || "");
+                            setState(data.address.state || "");
+                          }
+                        } catch (e) { }
+                      });
+                    }
+                  }}
+                  className="flex items-center gap-1 text-[10px] text-primary/80 hover:text-primary transition-colors"
+                >
+                  <MagicStar className="h-3 w-3" variant="Linear" /> Auto-detect
+                </button>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <input
@@ -238,7 +275,7 @@ export function RecordWiki() {
               <LoadingSpinner message="AI is transcribing and translating..." />
             ) : (
               <>
-                <h2 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4">
+                <h2 className="text-[11px] font-semibold text-muted-foreground mb-4">
                   Transcription & Translations
                 </h2>
 
@@ -250,7 +287,7 @@ export function RecordWiki() {
                       type="button"
                       onClick={() => setActiveTab(tab)}
                       className={cn(
-                        "flex-1 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all duration-200 capitalize",
+                        "flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-200 capitalize",
                         activeTab === tab
                           ? "bg-background text-primary shadow-sm border border-border/20"
                           : "text-muted-foreground hover:text-foreground"

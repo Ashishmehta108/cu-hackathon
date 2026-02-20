@@ -5,7 +5,7 @@ import type { ComplaintStatus, ComplaintCategory } from '../types';
 // ─── Create ───────────────────────────────────────────────────────────────────
 
 export async function create(req: Request, res: Response): Promise<void> {
-    const { text, language, category, keywords, department, location, petition, audioUrl, clusterCount } = req.body;
+    const { text, language, category, keywords, department, location, petition, audioUrl } = req.body;
 
     const complaint = await complaintService.createComplaint({
         text,
@@ -15,9 +15,8 @@ export async function create(req: Request, res: Response): Promise<void> {
         department,
         location,
         status: 'pending',
-        petition,
-        audioUrl,
-        clusterCount,
+        ...(petition != null && petition !== '' && { petition }),
+        ...(audioUrl != null && audioUrl !== '' && { audioUrl }),
     });
 
     res.status(201).json(complaint);
@@ -90,4 +89,20 @@ export async function remove(req: Request, res: Response): Promise<void> {
 export async function analytics(req: Request, res: Response): Promise<void> {
     const counts = await complaintService.countByCategory();
     res.json({ byCategory: counts });
+}
+
+// ─── Cluster count ─────────────────────────────────────────────────────────────
+
+export async function clusterCount(req: Request, res: Response): Promise<void> {
+    const { category, village, district, state } = req.query;
+    if (!category) {
+        res.status(400).json({ error: 'Missing required query param: category' });
+        return;
+    }
+    const count = await complaintService.getClusterCount(category as string, {
+        village: (village as string) ?? '',
+        district: (district as string) ?? '',
+        state: (state as string) ?? '',
+    });
+    res.json({ clusterCount: count });
 }
