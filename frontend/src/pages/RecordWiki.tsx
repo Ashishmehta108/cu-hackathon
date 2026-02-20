@@ -1,29 +1,29 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Mic,
-  FileText,
-  Sparkles,
-  CheckCircle2,
-  ArrowLeft,
-  ArrowRight,
-  MapPin,
+  Microphone,
+  DocumentText,
+  MagicStar,
+  TickCircle,
+  ArrowLeft2,
+  ArrowRight3,
+  Location as LocationIcon,
   User,
-} from "lucide-react";
+} from "iconsax-react";
 import { Button } from "@/components/ui/button";
 import { VoiceRecorder } from "@/components/voice-recorder";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CategoryBadge } from "@/components/category-badge";
 import { LANGUAGES } from "@/lib/types";
 import type { WikiCategory } from "@/lib/types";
-import { processWikiEntry } from "@/lib/api";
+import { processWikiEntry, createWikiEntry } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const STEPS = [
-  { label: "Record", icon: Mic },
-  { label: "Review", icon: FileText },
-  { label: "AI Tags", icon: Sparkles },
-  { label: "Published", icon: CheckCircle2 },
+  { label: "Record", icon: Microphone },
+  { label: "Review", icon: DocumentText },
+  { label: "AI Tags", icon: MagicStar },
+  { label: "Published", icon: TickCircle },
 ];
 
 export function RecordWiki() {
@@ -83,8 +83,20 @@ export function RecordWiki() {
     setTimeout(() => setIsTagging(false), 800);
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     setStep(3);
+    await createWikiEntry({
+      transcriptionOriginal,
+      transcriptionEnglish,
+      transcriptionHindi,
+      language,
+      title: suggestedTitle,
+      category: suggestedCategory || "other",
+      tags: suggestedTags,
+      description: suggestedDescription,
+      elderName,
+      location: { village, district, state },
+    });
     setTimeout(() => {
       navigate("/wiki");
     }, 2000);
@@ -103,30 +115,30 @@ export function RecordWiki() {
         onClick={() => navigate(-1)}
         className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors duration-200"
       >
-        <ArrowLeft className="h-3.5 w-3.5" />
+        <ArrowLeft2 className="h-3.5 w-3.5" variant="Linear" color="currentColor" />
         Back
       </button>
 
-      <h1 className="font-serif text-2xl font-bold text-foreground mb-1">
+      <h1 className="text-2xl font-black text-foreground mb-1 tracking-tight">
         Share Community Wisdom
       </h1>
-      <p className="text-sm text-muted-foreground mb-6">
+      <p className="text-xs font-medium text-muted-foreground mb-8">
         Preserve indigenous knowledge from your elders
       </p>
 
       {/* Step indicator */}
-      <div className="flex items-center gap-1 mb-8">
+      <div className="flex items-center gap-1.5 mb-10">
         {STEPS.map((s, i) => (
           <div key={s.label} className="flex flex-1 items-center gap-1">
             <div
               className={cn(
-                "flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg text-xs font-medium transition-colors duration-200",
-                i < step && "bg-green-500/10 text-green-600",
-                i === step && "bg-primary text-primary-foreground",
-                i > step && "bg-muted text-muted-foreground"
+                "flex h-7 flex-1 items-center justify-center gap-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all duration-300",
+                i < step && "bg-green-500/5 text-green-600/80 border border-green-500/10",
+                i === step && "bg-primary text-primary-foreground shadow-sm",
+                i > step && "bg-muted/50 text-muted-foreground/50 border border-transparent"
               )}
             >
-              <s.icon className="h-3.5 w-3.5" />
+              <s.icon className="h-3 w-3" />
               <span className="hidden sm:inline">{s.label}</span>
             </div>
           </div>
@@ -136,11 +148,11 @@ export function RecordWiki() {
       {/* Step 0: Record */}
       {step === 0 && (
         <div>
-          <div className="rounded-xl border border-border bg-card p-6">
+          <div className="rounded-2xl border border-border/50 bg-card p-6 transition-all">
             {/* Elder name */}
-            <div className="mb-4">
-              <label className="flex items-center gap-1.5 text-sm font-medium text-foreground mb-2">
-                <User className="h-3.5 w-3.5" />
+            <div className="mb-6">
+              <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                <User className="h-3.5 w-3.5 text-primary/60" variant="Linear" />
                 Elder Name
               </label>
               <input
@@ -148,18 +160,18 @@ export function RecordWiki() {
                 placeholder="Name of the knowledge holder"
                 value={elderName}
                 onChange={(e) => setElderName(e.target.value)}
-                className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                className="h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all font-medium"
               />
             </div>
 
             {/* Language selector */}
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Language
+            <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+              Select Language
             </label>
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
-              className="mb-6 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              className="mb-8 h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all font-medium"
             >
               {LANGUAGES.map((lang) => (
                 <option key={lang.code} value={lang.code}>
@@ -169,14 +181,14 @@ export function RecordWiki() {
             </select>
 
             {/* Voice Recorder */}
-            <VoiceRecorder onComplete={handleRecordingComplete} className="mb-6" />
+            <VoiceRecorder onComplete={handleRecordingComplete} className="mb-8" />
 
             {/* Location fields */}
-            <div className="border-t border-border pt-6">
-              <div className="flex items-center gap-2 mb-3">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium text-foreground">
-                  Location
+            <div className="border-t border-border/40 pt-6">
+              <div className="flex items-center gap-2 mb-4">
+                <LocationIcon className="h-4 w-4 text-primary/60" variant="Linear" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Location Details
                 </span>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -185,34 +197,34 @@ export function RecordWiki() {
                   placeholder="Village"
                   value={village}
                   onChange={(e) => setVillage(e.target.value)}
-                  className="h-10 rounded-lg border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="h-10 rounded-xl border border-border/60 bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
                 />
                 <input
                   type="text"
                   placeholder="District"
                   value={district}
                   onChange={(e) => setDistrict(e.target.value)}
-                  className="h-10 rounded-lg border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="h-10 rounded-xl border border-border/60 bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
                 />
                 <input
                   type="text"
                   placeholder="State"
                   value={state}
                   onChange={(e) => setState(e.target.value)}
-                  className="h-10 rounded-lg border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="h-10 rounded-xl border border-border/60 bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all"
                 />
               </div>
             </div>
           </div>
 
-          <div className="mt-6 flex justify-end">
+          <div className="mt-8 flex justify-end">
             <Button
               onClick={handleGoToReview}
               disabled={!hasRecording || !elderName}
-              className="gap-1.5"
+              className="gap-1.5 h-10 rounded-full px-6 text-xs font-bold transition-all shadow-sm hover:shadow-md"
             >
               Next: Review
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight3 className="h-4 w-4" variant="Linear" />
             </Button>
           </div>
         </div>
@@ -221,27 +233,27 @@ export function RecordWiki() {
       {/* Step 1: Review Transcriptions */}
       {step === 1 && (
         <div>
-          <div className="rounded-xl border border-border bg-card p-6">
+          <div className="rounded-2xl border border-border/50 bg-card p-6">
             {isProcessing ? (
               <LoadingSpinner message="AI is transcribing and translating..." />
             ) : (
               <>
-                <h2 className="text-sm font-semibold text-foreground mb-3">
+                <h2 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4">
                   Transcription & Translations
                 </h2>
 
                 {/* Tab buttons */}
-                <div className="flex gap-1 mb-4 rounded-lg bg-muted p-1">
+                <div className="flex gap-1 mb-6 rounded-xl bg-muted/50 p-1 border border-border/30">
                   {(["original", "english", "hindi"] as const).map((tab) => (
                     <button
                       key={tab}
                       type="button"
                       onClick={() => setActiveTab(tab)}
                       className={cn(
-                        "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors duration-200 capitalize",
+                        "flex-1 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all duration-200 capitalize",
                         activeTab === tab
-                          ? "bg-card text-foreground shadow-sm"
-                          : "text-muted-foreground"
+                          ? "bg-background text-primary shadow-sm border border-border/20"
+                          : "text-muted-foreground hover:text-foreground"
                       )}
                     >
                       {tab}
@@ -256,28 +268,29 @@ export function RecordWiki() {
                     if (activeTab === "english") setTranscriptionEnglish(e.target.value);
                     if (activeTab === "hindi") setTranscriptionHindi(e.target.value);
                   }}
-                  rows={5}
-                  className="w-full rounded-lg border border-input bg-background p-3 text-sm leading-relaxed text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                  rows={6}
+                  className="w-full rounded-xl border border-border/60 bg-muted/20 p-4 text-sm leading-relaxed text-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all resize-none shadow-inner"
                 />
-                <p className="mt-2 text-xs text-muted-foreground">
+                <p className="mt-3 text-[10px] font-medium text-muted-foreground/60 flex items-center gap-1.5">
+                  <DocumentText size={12} variant="Linear" />
                   You can edit translations if needed
                 </p>
               </>
             )}
           </div>
 
-          <div className="mt-6 flex justify-between">
-            <Button variant="outline" onClick={() => setStep(0)} className="gap-1.5">
-              <ArrowLeft className="h-4 w-4" />
+          <div className="mt-8 flex justify-between">
+            <Button variant="outline" onClick={() => setStep(0)} className="gap-1.5 h-10 rounded-full px-6 text-xs font-bold transition-all border-border/60 hover:bg-muted/50">
+              <ArrowLeft2 className="h-4 w-4" variant="Linear" />
               Back
             </Button>
             <Button
               onClick={handleGoToTags}
               disabled={isProcessing}
-              className="gap-1.5"
+              className="gap-1.5 h-10 rounded-full px-6 text-xs font-bold transition-all shadow-sm hover:shadow-md"
             >
               Next: AI Tags
-              <Sparkles className="h-4 w-4" />
+              <MagicStar className="h-4 w-4" variant="Linear" />
             </Button>
           </div>
         </div>
@@ -348,14 +361,14 @@ export function RecordWiki() {
           )}
 
           {!isTagging && (
-            <div className="mt-6 flex justify-between">
-              <Button variant="outline" onClick={() => setStep(1)} className="gap-1.5">
-                <ArrowLeft className="h-4 w-4" />
+            <div className="mt-8 flex justify-between">
+              <Button variant="outline" onClick={() => setStep(1)} className="gap-1.5 h-10 rounded-full px-6 text-xs font-bold transition-all border-border/60 hover:bg-muted/50">
+                <ArrowLeft2 className="h-4 w-4" variant="Linear" />
                 Back
               </Button>
-              <Button onClick={handlePublish} className="gap-1.5">
+              <Button onClick={handlePublish} className="gap-1.5 h-10 rounded-full px-6 text-xs font-bold transition-all shadow-sm hover:shadow-md bg-emerald-600 hover:bg-emerald-700 text-white border-transparent">
                 Publish Entry
-                <CheckCircle2 className="h-4 w-4" />
+                <TickCircle className="h-4 w-4" variant="Linear" />
               </Button>
             </div>
           )}
@@ -366,7 +379,7 @@ export function RecordWiki() {
       {step === 3 && (
         <div className="text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10 mb-4">
-            <CheckCircle2 className="h-8 w-8 text-green-600" />
+            <TickCircle className="h-8 w-8 text-green-600" variant="Linear" color="currentColor" />
           </div>
           <h2 className="font-serif text-2xl font-bold text-foreground mb-2">
             Wisdom Published
@@ -386,7 +399,7 @@ export function RecordWiki() {
               {village && (
                 <>
                   <span aria-hidden="true">&middot;</span>
-                  <MapPin className="h-3 w-3" />
+                  <LocationIcon className="h-3 w-3" variant="Linear" />
                   {village}, {state}
                 </>
               )}
@@ -402,7 +415,7 @@ export function RecordWiki() {
           <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Button onClick={() => navigate("/wiki")} className="gap-1.5">
               Browse Wiki
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight3 className="h-4 w-4" variant="Linear" color="currentColor" />
             </Button>
             <Button variant="outline" onClick={() => navigate("/")}>
               Back to Home

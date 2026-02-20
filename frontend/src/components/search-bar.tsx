@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, X } from "lucide-react";
+import { SearchNormal1, CloseCircle } from "iconsax-react";
 import { cn } from "@/lib/utils";
 
 export function SearchBar({
@@ -25,7 +25,7 @@ export function SearchBar({
 
   return (
     <div className={cn("relative", className)}>
-      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <SearchNormal1 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" variant="Linear" color="currentColor" />
       <input
         type="text"
         value={value}
@@ -40,7 +40,7 @@ export function SearchBar({
           className="absolute right-10 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors duration-200"
           aria-label="Clear search"
         >
-          <X className="h-4 w-4" />
+          <CloseCircle className="h-4 w-4" variant="Linear" color="currentColor" />
         </button>
       )}
       {resultCount !== undefined && (

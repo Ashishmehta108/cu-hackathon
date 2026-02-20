@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { BookOpen, Plus } from "lucide-react";
+import { Book1, Add } from "iconsax-react";
 import { Button } from "@/components/ui/button";
 import { WikiEntryCard } from "@/components/wiki-entry-card";
 import { SearchBar } from "@/components/search-bar";
@@ -48,18 +48,18 @@ export function Wiki() {
       <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <BookOpen className="h-5 w-5 text-green-600" />
-            <h1 className="font-serif text-2xl font-bold text-foreground">
+            <Book1 className="h-5 w-5 text-primary/60" variant="Linear" />
+            <h1 className="text-2xl font-black text-foreground tracking-tight">
               Community Wiki
             </h1>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs font-medium text-muted-foreground">
             Indigenous knowledge preserved for future generations
           </p>
         </div>
         <Link to="/record-wiki">
-          <Button className="gap-1.5">
-            <Plus className="h-4 w-4" />
+          <Button className="gap-1.5 h-9 rounded-full px-5 text-xs font-bold transition-all hover:shadow-md">
+            <Add className="h-4 w-4" variant="Linear" />
             Share Wisdom
           </Button>
         </Link>
@@ -74,17 +74,17 @@ export function Wiki() {
       />
 
       {/* Category filter pills */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap gap-1.5 mb-8">
         {WIKI_CATEGORIES.map((cat) => (
           <button
             key={cat}
             type="button"
             onClick={() => setCategoryFilter(cat)}
             className={cn(
-              "rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-200",
+              "rounded-full px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all duration-200 border",
               categoryFilter === cat
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground"
+                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                : "bg-background text-muted-foreground border-border hover:border-muted-foreground/30 hover:bg-muted/30"
             )}
           >
             {cat === "all"

@@ -1,5 +1,13 @@
 import { Link, useLocation } from "react-router-dom"
-import { Menu, X, Mic2, Home as HomeIcon, LayoutDashboard, LibraryBig, Radio } from "lucide-react"
+import {
+    HambergerMenu,
+    CloseCircle,
+    Microphone,
+    Home2 as HomeIcon,
+    Category,
+    Book1,
+    Radio,
+} from "iconsax-react";
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 
@@ -9,9 +17,9 @@ export function Navbar() {
 
     const links = [
         { href: "/", label: "Home", icon: HomeIcon },
-        { href: "/record-complaint", label: "Report Issue", icon: Mic2 },
-        { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { href: "/wiki", label: "Wiki", icon: LibraryBig },
+        { href: "/record-complaint", label: "Report Issue", icon: Microphone },
+        { href: "/dashboard", label: "Dashboard", icon: Category },
+        { href: "/wiki", label: "Wiki", icon: Book1 },
         { href: "/record-wiki", label: "Share Wisdom", icon: Radio },
     ]
 
@@ -21,10 +29,10 @@ export function Navbar() {
                 <div className="flex h-16 items-center justify-between">
                     <div className="flex items-center gap-2">
                         <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-                                <Mic2 className="h-5 w-5" />
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/[0.03] border border-primary/10 text-primary shadow-sm">
+                                <Microphone className="h-4 w-4" variant="Bold" />
                             </div>
-                            <span className="text-xl font-bold tracking-tight">Awaaz</span>
+                            <span className="text-lg font-black tracking-tighter text-foreground">Awaaz</span>
                         </Link>
                     </div>
 
@@ -37,11 +45,11 @@ export function Navbar() {
                                     key={link.href}
                                     to={link.href}
                                     className={cn(
-                                        "flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary",
-                                        isActive ? "text-primary" : "text-muted-foreground"
+                                        "flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider transition-all hover:text-primary",
+                                        isActive ? "text-primary bg-primary/[0.03] px-3 py-1.5 rounded-full" : "text-muted-foreground px-3 py-1.5"
                                     )}
                                 >
-                                    <link.icon className="h-4 w-4" />
+                                    <link.icon className="h-3.5 w-3.5" variant="Linear" />
                                     {link.label}
                                 </Link>
                             )
@@ -56,9 +64,9 @@ export function Navbar() {
                         >
                             <span className="sr-only">Open main menu</span>
                             {isOpen ? (
-                                <X className="block h-6 w-6" aria-hidden="true" />
+                                <CloseCircle className="block h-6 w-6" aria-hidden="true" variant="Linear" color="currentColor" />
                             ) : (
-                                <Menu className="block h-6 w-6" aria-hidden="true" />
+                                <HambergerMenu className="block h-6 w-6" aria-hidden="true" variant="Linear" color="currentColor" />
                             )}
                         </button>
                     </div>
@@ -83,7 +91,7 @@ export function Navbar() {
                                             : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                                     )}
                                 >
-                                    <link.icon className="h-5 w-5" />
+                                    <link.icon className="h-5 w-5" variant="Linear" color="currentColor" />
                                     {link.label}
                                 </Link>
                             )

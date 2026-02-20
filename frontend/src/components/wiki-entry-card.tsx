@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { MapPin, User, Volume2, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Location as LocationIcon,
+  User,
+  VolumeHigh,
+  ArrowDown2,
+  ArrowUp2,
+} from "iconsax-react";
 import { cn } from "@/lib/utils";
 import { CategoryBadge } from "@/components/category-badge";
 import { Button } from "@/components/ui/button";
@@ -43,7 +49,7 @@ export function WikiEntryCard({
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors duration-200"
             aria-label="Play audio"
           >
-            <Volume2 className="h-4 w-4" />
+            <VolumeHigh className="h-4 w-4" variant="Linear" color="currentColor" />
           </button>
         </div>
 
@@ -52,10 +58,10 @@ export function WikiEntryCard({
           {entry.title}
         </h3>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
-          <User className="h-3 w-3" />
+          <User className="h-3 w-3" variant="Linear" color="currentColor" />
           <span>Elder {entry.elderName}</span>
           <span aria-hidden="true">&middot;</span>
-          <MapPin className="h-3 w-3" />
+          <LocationIcon className="h-3 w-3" variant="Linear" color="currentColor" />
           <span>
             {entry.location.village}, {entry.location.state}
           </span>
@@ -87,11 +93,11 @@ export function WikiEntryCard({
         >
           {expanded ? (
             <>
-              <ChevronUp className="mr-1 h-3.5 w-3.5" /> Hide Transcriptions
+              <ArrowUp2 className="mr-1 h-3.5 w-3.5" variant="Linear" color="currentColor" /> Hide Transcriptions
             </>
           ) : (
             <>
-              <ChevronDown className="mr-1 h-3.5 w-3.5" /> View Transcriptions
+              <ArrowDown2 className="mr-1 h-3.5 w-3.5" variant="Linear" color="currentColor" /> View Transcriptions
             </>
           )}
         </Button>

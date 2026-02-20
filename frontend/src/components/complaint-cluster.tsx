@@ -1,4 +1,4 @@
-import { Flame, Users } from "lucide-react";
+import { Flash, People } from "iconsax-react";
 import { cn } from "@/lib/utils";
 import type { ComplaintCategory } from "@/lib/types";
 
@@ -34,11 +34,11 @@ export function ComplaintCluster({
       )}
     >
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-        <Flame className="h-5 w-5 text-primary" />
+        <Flash className="h-5 w-5 text-primary" variant="Linear" color="currentColor" />
       </div>
       <div>
         <div className="flex items-center gap-1.5">
-          <Users className="h-4 w-4 text-muted-foreground" />
+          <People className="h-4 w-4 text-muted-foreground" variant="Linear" color="currentColor" />
           <p className="text-sm font-semibold text-foreground">
             {count} people reported similar issues in your area
           </p>

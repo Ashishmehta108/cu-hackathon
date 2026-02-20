@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import FormData from 'form-data';
 import dotenv from 'dotenv';
 import type { CategorizeResult, ProcessWikiResult, WikiCategory, ComplaintCategory } from '../types';
+import { findDepartmentContact, draftEmail } from './agentService';
 
 dotenv.config();
 
@@ -11,6 +12,57 @@ const BASE_URL = process.env.SARVAM_BASE_URL ?? 'https://api.sarvam.ai';
 const headers = () => ({
     'api-subscription-key': API_KEY,
 });
+
+// Map simple language codes (hi, en, ta, etc.) to Sarvam's required codes.
+// Translate API uses 'auto' for language detection.
+function toSarvamLanguageCode(code: string | undefined | null): string {
+    if (!code || code.toLowerCase() === 'auto') {
+        return 'auto';
+    }
+
+    const normalized = code.toLowerCase();
+    const map: Record<string, string> = {
+        // Short codes
+        en: 'en-IN',
+        hi: 'hi-IN',
+        ta: 'ta-IN',
+        te: 'te-IN',
+        kn: 'kn-IN',
+        ml: 'ml-IN',
+        mr: 'mr-IN',
+        bn: 'bn-IN',
+        pa: 'pa-IN',
+        gu: 'gu-IN',
+        or: 'od-IN',
+        od: 'od-IN',
+        ne: 'ne-IN',
+        ur: 'ur-IN',
+        as: 'as-IN',
+        // Already-correct codes (pass-through)
+        'en-in': 'en-IN',
+        'hi-in': 'hi-IN',
+        'ta-in': 'ta-IN',
+        'te-in': 'te-IN',
+        'kn-in': 'kn-IN',
+        'ml-in': 'ml-IN',
+        'mr-in': 'mr-IN',
+        'bn-in': 'bn-IN',
+        'pa-in': 'pa-IN',
+        'gu-in': 'gu-IN',
+        'od-in': 'od-IN',
+        'ne-in': 'ne-IN',
+        'ur-in': 'ur-IN',
+        'as-in': 'as-IN',
+    };
+
+    return map[normalized] ?? 'auto';
+}
+
+// STT API uses 'unknown' instead of 'auto' for language auto-detection.
+function toSarvamSTTLanguageCode(code: string | undefined | null): string {
+    const mapped = toSarvamLanguageCode(code);
+    return mapped === 'auto' ? 'unknown' : mapped;
+}
 
 // ─── LLM Prompt Templates ─────────────────────────────────────────────────────
 
@@ -44,16 +96,20 @@ Respond ONLY with valid JSON: {"title": "...", "category": "...", "tags": [...],
 /**
  * Calls Sarvam Speech-to-Text API.
  * @param audioBuffer  Raw audio bytes from multer memory storage
- * @param language     Sarvam language code, or 'auto' for detection
+ * @param language     Simple language code (e.g. 'hi'), full code (e.g. 'hi-IN'), or 'auto' for detection
  */
 export async function speechToText(
     audioBuffer: Buffer,
-    language = 'auto'
+    language = 'auto',
+    mimetype = 'audio/wav'
 ): Promise<{ text: string; language: string }> {
+    const extension = mimetype.split(';')[0].split('/')[1] || 'wav';
+    const filename = `audio.${extension}`;
+
     const form = new FormData();
-    form.append('file', audioBuffer, { filename: 'audio.wav', contentType: 'audio/wav' });
+    form.append('file', audioBuffer, { filename, contentType: mimetype });
     form.append('model', 'saaras:v3');
-    form.append('language_code', language);
+    form.append('language_code', toSarvamSTTLanguageCode(language)); // STT uses 'unknown' for auto-detect
 
     const response = await fetch(`${BASE_URL}/speech-to-text`, {
         method: 'POST',
@@ -83,8 +139,8 @@ export async function translate(
         headers: { ...headers(), 'Content-Type': 'application/json' },
         body: JSON.stringify({
             input: text,
-            source_language_code: sourceLang,
-            target_language_code: targetLang,
+            source_language_code: toSarvamLanguageCode(sourceLang),
+            target_language_code: toSarvamLanguageCode(targetLang),
             model: 'mayura:v1',
         }),
     });
@@ -137,7 +193,7 @@ export async function textToSpeech(text: string, language: string): Promise<stri
         headers: { ...headers(), 'Content-Type': 'application/json' },
         body: JSON.stringify({
             inputs: [text],
-            target_language_code: language,
+            target_language_code: toSarvamLanguageCode(language),
             model: 'bulbul:v3',
         }),
     });
@@ -206,3 +262,5 @@ export async function processWikiEntry(
 
     return { english, hindi, ...metadata };
 }
+
+export { findDepartmentContact, draftEmail };

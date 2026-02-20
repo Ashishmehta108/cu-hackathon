@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, MapPin, Clock, ThumbsUp } from "lucide-react";
+import {
+  ArrowLeft2,
+  Location as LocationIcon,
+  Timer1,
+  Like1,
+} from "iconsax-react";
 import { Button } from "@/components/ui/button";
 import { CategoryBadge } from "@/components/category-badge";
 import { ComplaintCluster } from "@/components/complaint-cluster";
@@ -82,7 +87,7 @@ export function ComplaintDetail() {
         onClick={() => navigate(-1)}
         className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors duration-200"
       >
-        <ArrowLeft className="h-3.5 w-3.5" />
+        <ArrowLeft2 className="h-3.5 w-3.5" variant="Linear" color="currentColor" />
         Back
       </button>
 
@@ -110,7 +115,7 @@ export function ComplaintDetail() {
           disabled={upvoting}
           className="gap-1.5"
         >
-          <ThumbsUp className="h-4 w-4" />
+          <Like1 className="h-4 w-4" variant="Linear" color="currentColor" />
           {complaint.upvotes}
         </Button>
       </div>
@@ -145,14 +150,14 @@ export function ComplaintDetail() {
           </h2>
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <LocationIcon className="h-4 w-4 text-muted-foreground" variant="Linear" color="currentColor" />
               <span className="text-muted-foreground">Location:</span>
               <span className="text-foreground">
                 {complaint.location.village}, {complaint.location.district}, {complaint.location.state}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <Timer1 className="h-4 w-4 text-muted-foreground" variant="Linear" color="currentColor" />
               <span className="text-muted-foreground">Submitted:</span>
               <span className="text-foreground">{date}</span>
             </div>

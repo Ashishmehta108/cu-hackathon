@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Filter } from "lucide-react";
+import { Add } from "iconsax-react";
 import { Button } from "@/components/ui/button";
 import { ComplaintCard } from "@/components/complaint-card";
 import { SearchBar } from "@/components/search-bar";
@@ -60,8 +60,8 @@ export function Dashboard() {
           </p>
         </div>
         <Link to="/record-complaint">
-          <Button className="gap-1.5">
-            <Plus className="h-4 w-4" />
+          <Button className="gap-1.5 h-9 rounded-full px-5 text-xs font-bold transition-all hover:shadow-md">
+            <Add className="h-4 w-4" variant="Linear" color="currentColor" />
             Report Issue
           </Button>
         </Link>
@@ -69,18 +69,18 @@ export function Dashboard() {
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-3">
-          <div className="rounded-xl border border-border bg-card p-4">
-            <p className="text-2xl font-bold text-foreground">{stats.totalComplaints}</p>
-            <p className="text-sm text-muted-foreground">Total Complaints</p>
+        <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-3">
+          <div className="rounded-2xl border border-border/50 bg-card p-5 transition-colors hover:bg-accent/5">
+            <p className="text-2xl font-black text-foreground tabular-nums tracking-tight">{stats.totalComplaints}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1">Total Complaints</p>
           </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <p className="text-2xl font-bold text-foreground">{stats.totalPetitions}</p>
-            <p className="text-sm text-muted-foreground">Petitions Drafted</p>
+          <div className="rounded-2xl border border-border/50 bg-card p-5 transition-colors hover:bg-accent/5">
+            <p className="text-2xl font-black text-foreground tabular-nums tracking-tight">{stats.totalPetitions}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1">Petitions Drafted</p>
           </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <p className="text-2xl font-bold text-foreground">{stats.totalWikiEntries}</p>
-            <p className="text-sm text-muted-foreground">Wiki Entries</p>
+          <div className="rounded-2xl border border-border/50 bg-card p-5 transition-colors hover:bg-accent/5">
+            <p className="text-2xl font-black text-foreground tabular-nums tracking-tight">{stats.totalWikiEntries}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1">Wiki Entries</p>
           </div>
         </div>
       )}
@@ -94,17 +94,17 @@ export function Dashboard() {
       />
 
       {/* Category filter pills */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap gap-1.5 mb-8">
         {CATEGORIES.map((cat) => (
           <button
             key={cat}
             type="button"
             onClick={() => setCategoryFilter(cat)}
             className={cn(
-              "rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-200",
+              "rounded-full px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all duration-200 border",
               categoryFilter === cat
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground"
+                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                : "bg-background text-muted-foreground border-border hover:border-muted-foreground/30 hover:bg-muted/30"
             )}
           >
             {cat === "all" ? "All" : CATEGORY_LABELS[cat] ?? cat}

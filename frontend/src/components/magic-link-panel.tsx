@@ -1,4 +1,4 @@
-import { Sparkles, MapPin, ArrowRight } from "lucide-react";
+import { MagicStar, Location as LocationIcon, ArrowRight3 } from "iconsax-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import type { MagicLink } from "@/lib/types";
@@ -21,7 +21,7 @@ export function MagicLinkPanel({
     >
       <div className="flex items-center gap-2 mb-4">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-500/20">
-          <Sparkles className="h-4 w-4 text-yellow-600" />
+          <MagicStar className="h-4 w-4 text-yellow-600" variant="Linear" color="currentColor" />
         </div>
         <div>
           <h3 className="font-serif text-base font-semibold text-foreground">
@@ -48,12 +48,12 @@ export function MagicLinkPanel({
                 {link.relevance}
               </p>
               <div className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground">
-                <MapPin className="h-3 w-3" />
+                <LocationIcon className="h-3 w-3" variant="Linear" color="currentColor" />
                 Elder {link.elderName} &mdash; {link.location.village},{" "}
                 {link.location.state}
               </div>
             </div>
-            <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
+            <ArrowRight3 className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" variant="Linear" color="currentColor" />
           </Link>
         ))}
       </div>

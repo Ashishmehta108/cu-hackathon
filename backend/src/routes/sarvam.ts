@@ -57,5 +57,19 @@ export const sarvamRoutes = (upload: multer.Multer) => {
         asyncHandler(sarvamController.processWiki)
     );
 
+    // POST /api/sarvam/find-contact
+    router.post(
+        '/find-contact',
+        requireBody('department', 'location'),
+        asyncHandler(sarvamController.findContact)
+    );
+
+    // POST /api/sarvam/draft-email
+    router.post(
+        '/draft-email',
+        requireBody('complaint', 'department', 'location'),
+        asyncHandler(sarvamController.draftEmail)
+    );
+
     return router;
 };

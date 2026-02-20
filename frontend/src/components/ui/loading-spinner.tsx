@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { Refresh2 } from "iconsax-react";
 
 export function LoadingSpinner({
   message = "Loading...",
@@ -10,7 +10,7 @@ export function LoadingSpinner({
 }) {
   return (
     <div className={cn("flex flex-col items-center justify-center gap-3 py-12", className)}>
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <Refresh2 className="h-8 w-8 animate-spin text-primary" variant="Linear" color="currentColor" />
       <p className="text-sm font-medium text-muted-foreground">{message}</p>
     </div>
   );

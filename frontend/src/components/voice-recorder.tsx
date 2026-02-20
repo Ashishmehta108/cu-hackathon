@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Mic, Square, RotateCcw } from "lucide-react";
+import { Microphone, Stop, Refresh2 } from "iconsax-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -14,6 +14,7 @@ export function VoiceRecorder({
 }) {
   const [state, setState] = useState<RecorderState>("idle");
   const [seconds, setSeconds] = useState(0);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
 
   // Timer
   useEffect(() => {
@@ -22,7 +23,7 @@ export function VoiceRecorder({
       setSeconds((s) => {
         if (s >= 29) {
           // Auto-stop after 30s
-          setState("done");
+          handleStop();
           return 30;
         }
         return s + 1;
@@ -31,26 +32,48 @@ export function VoiceRecorder({
     return () => clearInterval(interval);
   }, [state]);
 
-  // Fire onComplete when done
-  useEffect(() => {
-    if (state === "done" && onComplete) {
-      const dummyBlob = new Blob(["dummy-audio-data"], { type: "audio/wav" });
-      onComplete(dummyBlob);
-    }
-  }, [state, onComplete]);
+  const handleStart = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
 
-  const handleStart = useCallback(() => {
-    setSeconds(0);
-    setState("recording");
-  }, []);
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunks.push(e.data);
+        }
+      };
+
+      recorder.onstop = () => {
+        const audioBlob = new Blob(chunks, { type: recorder.mimeType });
+        if (onComplete) {
+          onComplete(audioBlob);
+        }
+        // Stop all tracks to release the microphone
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      setMediaRecorder(recorder);
+      recorder.start();
+      setSeconds(0);
+      setState("recording");
+    } catch (err) {
+      console.error("Error accessing microphone:", err);
+      alert("Please allow microphone access to record.");
+    }
+  }, [onComplete]);
 
   const handleStop = useCallback(() => {
-    setState("done");
-  }, []);
+    if (mediaRecorder && state === "recording") {
+      mediaRecorder.stop();
+      setState("done");
+    }
+  }, [mediaRecorder, state]);
 
   const handleReset = useCallback(() => {
     setSeconds(0);
     setState("idle");
+    setMediaRecorder(null);
   }, []);
 
   const formatTime = (s: number) => {
@@ -85,9 +108,9 @@ export function VoiceRecorder({
             state === "idle" ? "Start recording" : state === "recording" ? "Stop recording" : "Reset recording"
           }
         >
-          {state === "idle" && <Mic className="h-8 w-8" />}
-          {state === "recording" && <Square className="h-6 w-6" />}
-          {state === "done" && <RotateCcw className="h-6 w-6" />}
+          {state === "idle" && <Microphone className="h-8 w-8" variant="Linear" color="currentColor" />}
+          {state === "recording" && <Stop className="h-6 w-6" variant="Linear" color="currentColor" />}
+          {state === "done" && <Refresh2 className="h-6 w-6" variant="Linear" color="currentColor" />}
         </button>
       </div>
 
@@ -123,7 +146,7 @@ export function VoiceRecorder({
       {/* Reset button when done */}
       {state === "done" && (
         <Button variant="outline" size="sm" onClick={handleReset}>
-          <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+          <Refresh2 className="mr-1.5 h-3.5 w-3.5" variant="Linear" color="currentColor" />
           Record Again
         </Button>
       )}

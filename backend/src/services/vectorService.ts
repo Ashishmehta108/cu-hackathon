@@ -1,4 +1,5 @@
 import { Pinecone } from '@pinecone-database/pinecone';
+import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import type { MagicLinkMatch } from '../types';
 
@@ -6,6 +7,7 @@ dotenv.config();
 
 const INDEX_NAME = process.env.PINECONE_INDEX_NAME ?? 'awaaz-wiki';
 const DIMENSION = 1024; // multilingual-e5-large output dimension
+const PINECONE_API_KEY = process.env.PINECONE_API_KEY ?? '';
 
 let pc: Pinecone;
 let index: ReturnType<Pinecone['index']>;
@@ -52,18 +54,62 @@ export async function initPinecone(): Promise<void> {
  * Generates a 1024-dim embedding for the given text using Pinecone Inference.
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
-
-    const result = await pc.inference.embed(
-        'multilingual-e5-large',
-        [text],
-        { inputType: 'passage' }
-    );
-
-    const embedding = result[0];
-    if (!embedding?.values) {
-        throw new Error('Pinecone inference returned no embedding values');
+    if (!PINECONE_API_KEY) {
+        throw new Error('PINECONE_API_KEY is not configured');
     }
-    return embedding.values;
+
+    // Prefer SDK-based inference when available
+    const anyPc = pc as any;
+    if (anyPc?.inference?.embed) {
+        const model = 'multilingual-e5-large';
+        const embeddings = await anyPc.inference.embed(
+            model,
+            [text],
+            { inputType: 'passage', truncate: 'END' }
+        );
+
+        const first = embeddings?.[0];
+        if (!first?.values) {
+            throw new Error('Pinecone inference (SDK) returned no embedding values');
+        }
+        return first.values as number[];
+    }
+
+    // Fallback: call Inference HTTP API directly
+    const response = await fetch('https://api.pinecone.io/embed', {
+        method: 'POST',
+        headers: {
+            'Api-Key': PINECONE_API_KEY,
+            'Content-Type': 'application/json',
+            'X-Pinecone-Api-Version': '2025-04',
+        },
+        body: JSON.stringify({
+            model: 'multilingual-e5-large',
+            parameters: {
+                input_type: 'passage',
+                truncate: 'END',
+            },
+            inputs: [{ text }],
+        }),
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        throw new Error(
+            `Pinecone HTTP inference error: ${response.status} ${response.statusText} ${errorText}`
+        );
+    }
+
+    const json = (await response.json()) as {
+        data?: { values?: number[] }[];
+    };
+
+    const values = json.data?.[0]?.values;
+    if (!values || !Array.isArray(values)) {
+        throw new Error('Pinecone HTTP inference returned no embedding values');
+    }
+
+    return values;
 }
 
 /**

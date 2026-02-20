@@ -6,9 +6,12 @@ import * as vectorService from '../services/vectorService';
 
 export async function stt(req: Request, res: Response): Promise<void> {
     const buffer = req.file!.buffer;
-    const language = (req.body.language as string) || 'auto';
+    const mimetype = req.file!.mimetype;
+    const language = (req.body.language as string) || 'unknown';
+    console.log('language', language, 'mimetype', mimetype);
 
-    const result = await sarvamService.speechToText(buffer, language);
+    const result = await sarvamService.speechToText(buffer, language, mimetype);
+    console.log('result', result);
     res.json(result); // { text, language }
 }
 
@@ -32,14 +35,23 @@ export async function categorize(req: Request, res: Response): Promise<void> {
 
 export async function petition(req: Request, res: Response): Promise<void> {
     const { complaint, category, department, location, clusterCount } = req.body;
-    const text = await sarvamService.draftPetition({
-        complaint,
-        category,
-        department,
-        location,
-        clusterCount: clusterCount ?? 0,
+
+    // Run both in parallel for efficiency
+    const [petitionText, contactInfo] = await Promise.all([
+        sarvamService.draftPetition({
+            complaint,
+            category,
+            department,
+            location,
+            clusterCount: clusterCount ?? 0,
+        }),
+        sarvamService.findDepartmentContact(department, `${location.district}, ${location.state}`)
+    ]);
+
+    res.json({
+        petition: petitionText,
+        contact: contactInfo
     });
-    res.json({ petition: text });
 }
 
 // ─── Text-to-Speech ──────────────────────────────────────────────────────────
@@ -63,5 +75,24 @@ export async function magicLink(req: Request, res: Response): Promise<void> {
 export async function processWiki(req: Request, res: Response): Promise<void> {
     const { transcription, language } = req.body;
     const result = await sarvamService.processWikiEntry(transcription, language);
+    res.json(result);
+}
+
+// ─── Department Contact Agent ──────────────────────────────────────────────
+
+export async function findContact(req: Request, res: Response): Promise<void> {
+    const { department, location } = req.body;
+    const result = await sarvamService.findDepartmentContact(department, location);
+    res.json(result);
+}
+
+export async function draftEmail(req: Request, res: Response): Promise<void> {
+    const { complaint, department, location, recipientEmail } = req.body;
+    const result = await sarvamService.draftEmail({
+        complaint,
+        department,
+        location,
+        recipientEmail,
+    });
     res.json(result);
 }

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPin, ThumbsUp, Clock } from "lucide-react";
+import { Location as LocationIcon, Like1, Timer1 } from "iconsax-react";
 import { cn } from "@/lib/utils";
 import { CategoryBadge } from "@/components/category-badge";
 import type { Complaint } from "@/lib/types";
@@ -57,15 +57,15 @@ export function ComplaintCard({
             {/* Meta info */}
             <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
-                <MapPin className="h-3 w-3" />
+                <LocationIcon className="h-3 w-3" variant="Linear" color="currentColor" />
                 {complaint.location.village}, {complaint.location.district}
               </span>
               <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
+                <Timer1 className="h-3 w-3" variant="Linear" color="currentColor" />
                 {date}
               </span>
               <span className="flex items-center gap-1">
-                <ThumbsUp className="h-3 w-3" />
+                <Like1 className="h-3 w-3" variant="Linear" color="currentColor" />
                 {complaint.upvotes}
               </span>
             </div>
