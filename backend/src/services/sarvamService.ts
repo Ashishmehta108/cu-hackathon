@@ -75,8 +75,8 @@ export function truncateForTokens(text: string, maxChars = MAX_CONTEXT_CHARS): s
 
 // ─── LLM Prompt Templates (concise for 7k token limit) ─────────────────────────
 
-const CATEGORIZE_SYSTEM_PROMPT = `Classify Indian civic complaints. Output ONLY valid JSON:
-{"category":"Infrastructure|Health|Agriculture|Water|Education|Corruption|Other","keywords":["word1","word2","word3"],"department":"Indian govt department name"}`;
+const CATEGORIZE_SYSTEM_PROMPT = `Classify Indian civic complaints. Determine if genuine. Output ONLY valid JSON:
+{"category":"Infrastructure|Health|Agriculture|Water|Education|Corruption|Other","keywords":["word1","word2","word3"],"department":"Indian govt department name","isGenuine":true}`;
 
 const PETITION_SYSTEM_PROMPT = `Draft a formal petition to an Indian govt department. English, 150-200 words. Include: department head address, complaint, location, action requested. End: "Yours faithfully, The Citizens of [village/district]". Output the petition text only.`;
 

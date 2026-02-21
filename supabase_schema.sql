@@ -20,8 +20,14 @@ create table if not exists complaints (
   status       text         not null default 'pending',
   petition     text,
   audio_url    text,
+  image_url    text,        -- URL from Supabase storage
+  image_timestamp text,     -- ISO timestamp when image uploaded
   cluster_id   text,
   cluster_count integer      not null default 1,
+  escalation_level integer   not null default 0,
+  last_escalation_date text,
+  status_history jsonb       not null default '[]',  -- array of {status, timestamp, notes}
+  emails       jsonb        not null default '[]',   -- array of email communications
   created_at   timestamptz  not null default now(),
   updated_at   timestamptz  not null default now()
 );
@@ -91,3 +97,20 @@ create policy "Public read wiki_entries" on wiki_entries for select using (true)
 create policy "Allow insert wiki_entries" on wiki_entries for insert with check (true);
 create policy "Allow update wiki_entries" on wiki_entries for update using (true);
 create policy "Allow delete wiki_entries" on wiki_entries for delete using (true);
+
+-- ────────────────────────────────────────────────────────────
+--  Storage Buckets
+-- ────────────────────────────────────────────────────────────
+-- Create the 'upload' bucket for complaint images/audio
+insert into storage.buckets (id, name, public) values ('upload', 'upload', true);
+
+-- Storage policies for 'upload' bucket
+drop policy if exists "Public read upload" on storage.objects;
+drop policy if exists "Allow insert upload" on storage.objects;
+drop policy if exists "Allow update upload" on storage.objects;
+drop policy if exists "Allow delete upload" on storage.objects;
+
+create policy "Public read upload" on storage.objects for select using (bucket_id = 'upload');
+create policy "Allow insert upload" on storage.objects for insert with check (bucket_id = 'upload');
+create policy "Allow update upload" on storage.objects for update using (bucket_id = 'upload');
+create policy "Allow delete upload" on storage.objects for delete using (bucket_id = 'upload');

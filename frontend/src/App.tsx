@@ -6,6 +6,8 @@ import { Dashboard } from "./pages/Dashboard"
 import { Wiki } from "./pages/Wiki"
 import { RecordWiki } from "./pages/RecordWiki"
 import { ComplaintDetail } from "./pages/ComplaintDetail"
+import { Admin } from "./pages/Admin"
+import { Login } from "./pages/Login"
 
 function App() {
   return (
@@ -20,6 +22,8 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/wiki" element={<Wiki />} />
             <Route path="/record-wiki" element={<RecordWiki />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/login" element={<Login />} />
           </Routes>
         </main>
       </div>

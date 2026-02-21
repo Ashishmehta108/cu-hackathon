@@ -20,8 +20,7 @@ export function Navbar() {
         { href: "/", label: "Home", icon: HomeIcon },
         { href: "/record-complaint", label: "Report Issue", icon: Microphone },
         { href: "/dashboard", label: "Dashboard", icon: Category },
-        { href: "/wiki", label: "Wiki", icon: Book1 },
-        { href: "/record-wiki", label: "Share Wisdom", icon: Radio },
+       
     ]
 
     return (

@@ -8,7 +8,10 @@ import { complaintRoutes } from './routes/complaints';
 import { wikiRoutes } from './routes/wiki';
 import { emailRoutes } from './routes/email';
 import { testRoutes } from './routes/test';
+import { adminRoutes } from './routes/admin';
+import { authRoutes } from './routes/auth';
 import { initPinecone } from './services/vectorService';
+import { startEscalationAgent } from './services/escalationService';
 import { requestLogger } from './middlewares/requestLogger';
 import { errorMiddleware } from './middlewares/errorMiddleware';
 
@@ -31,15 +34,17 @@ app.use('/api/complaints', complaintRoutes);
 app.use('/api/wiki', wikiRoutes);
 app.use('/api/email', emailRoutes);
 app.use('/api/test', testRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/auth', authRoutes);
 
-// ─── Global Error Handler (must be LAST) ─────────────────────────────────────
-app.use(errorMiddleware);
+app.use('/uploads', express.static('uploads'));
 
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3001;
 
 initPinecone()
     .then(() => {
+        startEscalationAgent();
         app.listen(PORT, () => {
             console.log(`✅  Awaaz server running on http://localhost:${PORT}`);
         });

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Add } from "iconsax-react";
 import { Button } from "@/components/ui/button";
 import { ComplaintCard } from "@/components/complaint-card";
@@ -24,6 +24,7 @@ const CATEGORIES: (ComplaintCategory | "all")[] = [
 ];
 
 export function Dashboard() {
+  const navigate = useNavigate();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState<ComplaintCategory | "all">("all");
@@ -32,6 +33,12 @@ export function Dashboard() {
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
 
   useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
     setLoading(true);
     Promise.all([
       fetchComplaints({
@@ -44,7 +51,7 @@ export function Dashboard() {
       setStats(statsData);
       setLoading(false);
     });
-  }, [categoryFilter, searchQuery]);
+  }, [categoryFilter, searchQuery, navigate]);
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);

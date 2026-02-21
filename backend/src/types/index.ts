@@ -27,8 +27,14 @@ export interface Complaint {
     status: ComplaintStatus;
     petition?: string;   // generated petition text
     audioUrl?: string;   // optional original audio URL
+    imageUrl?: string;   // optional image URL with embedded timestamp
+    imageTimestamp?: string; // timestamp when image was uploaded
     clusterId?: string;  // cluster key: category|village|district|state
     clusterCount?: number; // number of complaints in same cluster (same category + location)
+    escalationLevel?: number; // escalation level: 0 (initial), 1 (after 3 days), 2 (after 7 days), 3 (after 15 days)
+    lastEscalationDate?: string; // date of last escalation
+    statusHistory?: { status: ComplaintStatus; timestamp: string; notes?: string }[]; // status change history
+    emails?: { type: 'sent' | 'received'; to?: string; from?: string; subject: string; body: string; timestamp: string }[]; // email communications
     createdAt?: string;
     updatedAt?: string;
 }
@@ -76,6 +82,7 @@ export interface CategorizeResult {
     category: ComplaintCategory;
     keywords: string[];
     department: string;
+    isGenuine: boolean;
 }
 
 export interface PetitionResult {

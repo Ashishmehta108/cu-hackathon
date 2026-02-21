@@ -40,6 +40,30 @@ export async function getClusterCount(category: string, location: Location): Pro
 }
 
 /**
+ * Safely parse keywords into a plain string array.
+ * Handles: string[], JSON string, double-encoded JSON, or garbage.
+ */
+function parseKeywords(raw: unknown): string[] {
+    if (Array.isArray(raw)) {
+        return raw.map(String);
+    }
+    if (typeof raw === 'string') {
+        try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return parsed.map(String);
+            // double-encoded: parse again
+            if (typeof parsed === 'string') {
+                const parsed2 = JSON.parse(parsed);
+                if (Array.isArray(parsed2)) return parsed2.map(String);
+            }
+        } catch {
+            // not valid JSON, ignore
+        }
+    }
+    return [];
+}
+
+/**
  * Create a new complaint row in Supabase.
  * Auto-computes clusterId and clusterCount (existing count + 1).
  */
@@ -51,19 +75,26 @@ export async function createComplaint(
     const clusterId = getClusterId(category, location);
     const existingCount = await getClusterCount(category, location);
     const clusterCount = existingCount + 1;
+    const keywords = parseKeywords(data.keywords);
 
     const row = {
         text: data.text,
         language: data.language,
         category: data.category,
-        keywords: data.keywords ?? [],
+        keywords,
         department: data.department,
         location: data.location,
         status: data.status ?? 'pending',
         petition: data.petition ?? null,
         audio_url: data.audioUrl ?? null,
+        image_url: data.imageUrl ?? null,
+        image_timestamp: data.imageTimestamp ?? null,
         cluster_id: clusterId,
         cluster_count: clusterCount,
+        escalation_level: data.escalationLevel ?? 0,
+        last_escalation_date: data.lastEscalationDate ?? null,
+        status_history: [{ status: data.status ?? 'pending', timestamp: new Date().toISOString() }],
+        emails: [],
     };
 
     const { data: inserted, error } = await supabase
@@ -114,7 +145,6 @@ export async function getComplaints(filters?: {
         query = query.eq('category', filters.category) as any;
     }
     if (filters?.village) {
-        // location is stored as JSONB — filter by nested key
         query = (query as any).filter('location->>village', 'eq', filters.village);
     }
 
@@ -138,7 +168,7 @@ export async function updateComplaint(
     if (data.text !== undefined) updates.text = data.text;
     if (data.language !== undefined) updates.language = data.language;
     if (data.category !== undefined) updates.category = data.category;
-    if (data.keywords !== undefined) updates.keywords = data.keywords;
+    if (data.keywords !== undefined) updates.keywords = parseKeywords(data.keywords);
     if (data.department !== undefined) updates.department = data.department;
     if (data.location !== undefined) updates.location = data.location;
     if (data.status !== undefined) updates.status = data.status;
@@ -146,6 +176,8 @@ export async function updateComplaint(
     if (data.audioUrl !== undefined) updates.audio_url = data.audioUrl;
     if (data.clusterId !== undefined) updates.cluster_id = data.clusterId;
     if (data.clusterCount !== undefined) updates.cluster_count = data.clusterCount;
+    if (data.statusHistory !== undefined) updates.status_history = data.statusHistory;
+    if (data.emails !== undefined) updates.emails = data.emails;
     updates.updated_at = new Date().toISOString();
 
     const { data: updated, error } = await supabase
@@ -163,29 +195,36 @@ export async function updateComplaint(
 }
 
 /**
- * Update only the status of a complaint.
+ * Update only the status of a complaint, appending to statusHistory.
  */
 export async function updateComplaintStatus(
     id: string,
-    status: ComplaintStatus
+    status: ComplaintStatus,
+    notes?: string
 ): Promise<Complaint | null> {
-    return updateComplaint(id, { status });
+    const complaint = await getComplaintById(id);
+    if (!complaint) return null;
+
+    const newHistoryEntry = { status, timestamp: new Date().toISOString(), notes };
+    const updatedHistory = [...(complaint.statusHistory ?? []), newHistoryEntry];
+
+    return updateComplaint(id, { status, statusHistory: updatedHistory });
 }
 
 /**
- * Delete a complaint by ID.
+ * Log an email communication for a complaint.
  */
-export async function deleteComplaint(id: string): Promise<boolean> {
-    const { error } = await supabase
-        .from(TABLE)
-        .delete()
-        .eq('id', id);
+export async function logEmail(
+    id: string,
+    email: { type: 'sent' | 'received'; to?: string; from?: string; subject: string; body: string }
+): Promise<Complaint | null> {
+    const complaint = await getComplaintById(id);
+    if (!complaint) return null;
 
-    if (error) {
-        console.error('deleteComplaint error:', error);
-        return false;
-    }
-    return true;
+    const emailEntry = { ...email, timestamp: new Date().toISOString() };
+    const updatedEmails = [...(complaint.emails ?? []), emailEntry];
+
+    return updateComplaint(id, { emails: updatedEmails });
 }
 
 /**
@@ -209,6 +248,22 @@ export async function countByCategory(): Promise<Record<string, number>> {
     return counts;
 }
 
+/**
+ * Delete a complaint by ID.
+ */
+export async function deleteComplaint(id: string): Promise<boolean> {
+    const { error } = await supabase
+        .from(TABLE)
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        console.error('deleteComplaint error:', error);
+        return false;
+    }
+    return true;
+}
+
 // ── Row mapper: Supabase snake_case → app camelCase ──────────────────────────
 
 function mapRow(row: Record<string, unknown>): Complaint {
@@ -217,14 +272,20 @@ function mapRow(row: Record<string, unknown>): Complaint {
         text: row.text as string,
         language: row.language as string,
         category: row.category as Complaint['category'],
-        keywords: (row.keywords as string[]) ?? [],
+        keywords: parseKeywords(row.keywords),
         department: row.department as string,
         location: row.location as Location,
         status: row.status as ComplaintStatus,
         petition: row.petition as string | undefined,
         audioUrl: row.audio_url as string | undefined,
+        imageUrl: row.image_url as string | undefined,
+        imageTimestamp: row.image_timestamp as string | undefined,
         clusterId: row.cluster_id as string | undefined,
         clusterCount: row.cluster_count as number | undefined,
+        escalationLevel: row.escalation_level as number | undefined,
+        lastEscalationDate: row.last_escalation_date as string | undefined,
+        statusHistory: row.status_history as { status: ComplaintStatus; timestamp: string; notes?: string }[] | undefined,
+        emails: row.emails as { type: 'sent' | 'received'; to?: string; from?: string; subject: string; body: string; timestamp: string }[] | undefined,
         createdAt: row.created_at as string | undefined,
         updatedAt: row.updated_at as string | undefined,
     };

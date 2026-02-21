@@ -203,6 +203,66 @@ export function ComplaintDetail() {
         {complaint.petitionText && (
           <PetitionDraft petitionText={complaint.petitionText} userLocation={complaint.location} />
         )}
+
+        {/* Status History */}
+        {complaint.statusHistory && complaint.statusHistory.length > 0 && (
+          <div className="rounded-xl border border-border bg-card p-6">
+            <h2 className="text-sm font-semibold text-foreground mb-3">
+              Status History
+            </h2>
+            <div className="space-y-3">
+              {complaint.statusHistory.map((entry, index) => (
+                <div key={index} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-medium text-foreground capitalize">
+                        {entry.status.replace('_', ' ')}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(entry.timestamp).toLocaleString()}
+                      </span>
+                    </div>
+                    {entry.notes && (
+                      <p className="text-sm text-muted-foreground">{entry.notes}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Email Log */}
+        {complaint.emails && complaint.emails.length > 0 && (
+          <div className="rounded-xl border border-border bg-card p-6">
+            <h2 className="text-sm font-semibold text-foreground mb-3">
+              Email Communications
+            </h2>
+            <div className="space-y-3">
+              {complaint.emails.map((email, index) => (
+                <div key={index} className="p-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={cn(
+                      "text-xs font-medium px-2 py-0.5 rounded-full",
+                      email.type === 'sent' ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"
+                    )}>
+                      {email.type === 'sent' ? 'Sent' : 'Received'}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(email.timestamp).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="text-sm">
+                    <p className="font-medium">{email.subject}</p>
+                    {email.to && <p className="text-muted-foreground">To: {email.to}</p>}
+                    {email.from && <p className="text-muted-foreground">From: {email.from}</p>}
+                    <p className="mt-1 text-foreground">{email.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -316,20 +316,31 @@ export async function submitComplaint(data: {
   petitionText: string;
   magicLinks: MagicLink[];
   clusterCount: number;
+  image?: File;
 }): Promise<Complaint> {
+  const formData = new FormData();
+
+  if (data.image) {
+    formData.append('image', data.image);
+  }
+
+  formData.append('text', data.transcription);
+  formData.append('language', data.language);
+  formData.append('category', toBackendComplaintCategory(data.category));
+
+  // ✅ Append each keyword as a separate field instead of JSON.stringify
+  const safeKeywords = Array.isArray(data.keywords) ? data.keywords : [];
+  safeKeywords.forEach((kw) => formData.append('keywords[]', kw));
+
+  formData.append('department', data.department);
+  formData.append('location', JSON.stringify(data.location));
+  formData.append('status', 'pending');
+  formData.append('petition', data.petitionText);
+  formData.append('clusterCount', data.clusterCount.toString());
+
   const backend = await apiCall<BackendComplaint>("/complaints", {
     method: "POST",
-    body: JSON.stringify({
-      text: data.transcription,
-      language: data.language,
-      category: toBackendComplaintCategory(data.category),
-      keywords: data.keywords,
-      department: data.department,
-      location: data.location,
-      status: "pending",
-      petition: data.petitionText,
-      clusterCount: data.clusterCount,
-    }),
+    body: formData,
   });
 
   const saved = mapBackendComplaintToFrontend(backend);

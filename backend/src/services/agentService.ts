@@ -111,7 +111,7 @@ export async function findDepartmentContact(department: string, location: string
     }
 }
 
-/** Extract Indian phone: 10-digit mobile, 1800 toll-free, +91, landline (011-xxx). */
+/** Extract Indian phone: 10-digit mobile, 1800 toll-free, +91, landline (011-xxx). Avoid dates, codes, etc. */
 function extractPhone(text: string): string | null {
     const patterns = [
         /\b1800[\s-]?\d{4}[\s-]?\d{3}\b/i, // Toll free
@@ -120,9 +120,27 @@ function extractPhone(text: string): string | null {
         /\b0\d{2,4}[\s-]?\d{6,8}\b/, // STD Landline
         /\b\d{3,5}[\s-]\d{5,7}\b/, // General spaced landline
     ];
+
+    // Unwanted patterns to exclude: dates, long codes, etc.
+    const unwanted = [
+        /\d{4}[\s/-]\d{1,2}[\s/-]\d{1,2}/, // Dates YYYY-MM-DD
+        /\d{1,2}[\s/-]\d{1,2}[\s/-]\d{4}/, // Dates DD-MM-YYYY
+        /\b\d{12,}\b/, // Very long numbers (codes, IDs)
+        /\b\d{1,5}\b/, // Very short numbers
+        /\b\d{6}[\s-]\d{4}\b/, // PIN codes or similar
+    ];
+
     for (const p of patterns) {
-        const m = text.match(p);
-        if (m) return m[0].replace(/\s+/g, ' ').trim();
+        const matches = text.match(p);
+        if (matches) {
+            for (const match of matches) {
+                // Check if it matches any unwanted pattern
+                const isUnwanted = unwanted.some(u => u.test(match));
+                if (!isUnwanted) {
+                    return match.replace(/\s+/g, ' ').trim();
+                }
+            }
+        }
     }
     return null;
 }

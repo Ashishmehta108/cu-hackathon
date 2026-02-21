@@ -3,8 +3,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const supabaseUrl = "https://vcwaeqdbzlbqneekcctk.supabase.co"
-const supabaseServiceKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjd2FlcWRiemxicW5lZWtjY3RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1OTczNDgsImV4cCI6MjA4NzE3MzM0OH0.7S6o1rR3sOmSjS4bFcpSFK_uJmjdBsgQGhFz8XnTgQk";
+const supabaseUrl = process.env.SUPABASE_URL || "https://vcwaeqdbzlbqneekcctk.supabase.co";
+const supabaseServiceKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjd2FlcWRiemxicW5lZWtjY3RrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTU5NzM0OCwiZXhwIjoyMDg3MTczMzQ4fQ.GPNPkdUchLD0VvfvSdfUPO0KaamzsjCsU_07Xa-YxG8"
 
 if (!supabaseUrl || !supabaseServiceKey) {
     console.error('❌  Supabase: Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars');

@@ -1,16 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
 import { Resend } from 'resend';
 import { asyncHandler } from '../utils/asyncHandler';
+import * as complaintService from '../services/complaintService';
 
 const resend = new Resend(process.env.RESEND_API_KEY || 're_123'); // Fallback to prevent crash, though will fail sending
 
 /**
  * Send an email to authorities (or self) regarding a petition.
  * POST /api/email/send
- * Body: { to: string, subject: string, text: string, html?: string }
+ * Body: { to: string, subject: string, text: string, html?: string, complaintId?: string }
  */
 export const sendEmail = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const { to, subject, text, html } = req.body;
+    const { to, subject, text, html, complaintId } = req.body;
 
     if (!to || !subject || !text) {
         res.status(400).json({ success: false, error: 'Missing required fields: to, subject, text' });
@@ -35,6 +36,16 @@ export const sendEmail = asyncHandler(async (req: Request, res: Response, next: 
             console.error('Resend error:', error);
             res.status(400).json({ success: false, error });
             return;
+        }
+
+        // Log the email if complaintId is provided
+        if (complaintId) {
+            await complaintService.logEmail(complaintId, {
+                type: 'sent',
+                to,
+                subject,
+                body: text,
+            });
         }
 
         res.status(200).json({ success: true, data });
