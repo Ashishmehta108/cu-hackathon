@@ -4,12 +4,12 @@ import crypto from "crypto";
 
 // Initialize Twilio
 const client = twilio(
-  "AC8586eea42d8d154807a93d7e8a3ae090",
-  "5926ab91672a3ec1009c99e807dca1e2"
+  process.env.TWILIO_ACCOUNT_SID!,
+  process.env.TWILIO_AUTH_TOKEN!
 );
 
 // Twilio Verify Service SID
-const verifyServiceSid = "VA8bb1ce9f29389249eb57d0f361456d96";
+const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID!;
 
 // Initialize Upstash Redis
 const redis = new Redis({
