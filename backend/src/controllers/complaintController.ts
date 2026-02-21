@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { supabase } from '../config/supabase';
 import * as complaintService from '../services/complaintService';
-import sharp from 'sharp';
 import type { ComplaintStatus, ComplaintCategory } from '../types';
 
 // ─── Create ───────────────────────────────────────────────────────────────────
@@ -25,43 +24,24 @@ if (Array.isArray(rawKeywords)) {
 }
 
     let imageUrl: string | undefined;
-    let imageTimestamp: string | undefined;
 
     if (req.file) {
-        const timestamp = new Date().toISOString();
         const fileName = `complaint-${Date.now()}-${req.file.originalname}`;
-        const locationText = `${location.village}, ${location.district}, ${location.state}`;
-        const bufferWithTimestamp = await sharp(req.file.buffer)
-            .composite([{
-                input: Buffer.from(`
-                    <svg width="600" height="100">
-                        <text x="10" y="30" font-family="Arial" font-size="20" fill="white" stroke="black" stroke-width="2">${timestamp}</text>
-                        <text x="10" y="60" font-family="Arial" font-size="20" fill="white" stroke="black" stroke-width="2">${locationText}</text>
-                    </svg>
-                `),
-                top: 10,
-                left: 10,
-            }])
-            .png()
-            .toBuffer();
-        const { data, error } = await supabase.storage
+        const contentType = req.file.mimetype || 'image/jpeg';
+        const { error } = await supabase.storage
             .from('upload')
-            .upload(fileName, bufferWithTimestamp, {
-                contentType: 'image/png',
+            .upload(fileName, req.file.buffer, {
+                contentType,
                 upsert: false,
             });
 
         if (error) {
             console.error('Supabase upload error:', error);
-            // Continue without image, or return error
-            // For now, continue without image
         } else {
-            // Get public URL
             const { data: urlData } = supabase.storage
                 .from('upload')
                 .getPublicUrl(fileName);
             imageUrl = urlData.publicUrl;
-            imageTimestamp = timestamp;
         }
     }
 
@@ -76,7 +56,6 @@ if (Array.isArray(rawKeywords)) {
         ...(petition != null && petition !== '' && { petition }),
         ...(audioUrl != null && audioUrl !== '' && { audioUrl }),
         ...(imageUrl && { imageUrl }),
-        ...(imageTimestamp && { imageTimestamp }),
         escalationLevel: 0,
     });
 

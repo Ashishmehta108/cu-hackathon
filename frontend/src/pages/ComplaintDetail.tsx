@@ -123,6 +123,32 @@ export function ComplaintDetail() {
 
       {/* Complaint content */}
       <div className="space-y-6">
+        {/* Image */}
+        {complaint.imageUrl && (
+          <div className="rounded-xl border border-border bg-card p-6">
+            <h2 className="text-sm font-semibold text-foreground mb-3">
+              Attached Image
+            </h2>
+            <a
+              href={complaint.imageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block overflow-hidden rounded-lg border border-border bg-muted/30 hover:opacity-95 transition-opacity"
+            >
+              <img
+                src={complaint.imageUrl}
+                alt="Complaint evidence"
+                className="w-full max-h-[400px] object-contain"
+              />
+            </a>
+            {complaint.imageTimestamp && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Captured: {new Date(complaint.imageTimestamp).toLocaleString()}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Transcription */}
         <div className="rounded-xl border border-border bg-card p-6">
           <h2 className="text-sm font-semibold text-foreground mb-3">

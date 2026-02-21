@@ -55,6 +55,8 @@ export interface Complaint {
   magicLinks: MagicLink[];
   createdAt: string;
   clusterCount: number;
+  imageUrl?: string;
+  imageTimestamp?: string;
   statusHistory?: { status: ComplaintStatus; timestamp: string; notes?: string }[];
   emails?: { type: 'sent' | 'received'; to?: string; from?: string; subject: string; body: string; timestamp: string }[];
 }

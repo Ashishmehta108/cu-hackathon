@@ -39,6 +39,14 @@ app.use('/api/auth', authRoutes);
 
 app.use('/uploads', express.static('uploads'));
 
+// ─── 404 handler ─────────────────────────────────────────────────────────────
+app.use((_req, res) => {
+    res.status(404).json({ error: 'Not found', path: _req.path });
+});
+
+// ─── Error handler (must be last) ────────────────────────────────────────────
+app.use(errorMiddleware);
+
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3001;
 

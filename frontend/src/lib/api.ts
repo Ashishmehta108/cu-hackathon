@@ -84,6 +84,8 @@ type BackendComplaint = {
   petition?: string;
   audioUrl?: string;
   clusterCount?: number;
+  imageUrl?: string;
+  imageTimestamp?: string;
   createdAt?: string | { seconds: number; nanoseconds: number } | any;
   updatedAt?: string | { seconds: number; nanoseconds: number } | any;
 };
@@ -190,6 +192,8 @@ function mapBackendComplaintToFrontend(c: BackendComplaint): Complaint {
     magicLinks: [],
     createdAt,
     clusterCount: c.clusterCount ?? 0,
+    imageUrl: c.imageUrl,
+    imageTimestamp: c.imageTimestamp,
   };
 }
 
